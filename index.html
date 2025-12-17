@@ -1,3 +1,15 @@
+C'est un problème classique : le code JavaScript a probablement rencontré une erreur de syntaxe (une parenthèse manquante ou une virgule oubliée) lors de la copie, ce qui fait que l'application ne se charge pas du tout. C'est pour cela que App n'est pas défini et que rien ne clique.
+
+J'ai corrigé l'erreur technique (le script est maintenant blindé) et j'ai remis le style des "barres de chargement" (les jauges de notation) avec un look épais et coloré, comme vous l'avez demandé.
+
+Voici le code complet, prêt à l'emploi. Copiez-le intégralement pour remplacer votre fichier actuel.
+
+code
+Html
+play_circle
+download
+content_copy
+expand_less
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,33 +18,34 @@
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Guide Michelin SIL - V27 Color</title>
+    <!-- Fix Favicon 404 -->
+    <link rel="icon" href="data:,">
     
-    <!-- 1. FONTS & ICONS -->
+    <title>Guide Michelin SIL - V28 Stable</title>
+    
+    <!-- FONTS & ICONS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 2. LEAFLET CSS -->
+    <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-    <!-- 3. GOOGLE AUTH -->
+    <!-- GOOGLE AUTH -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         /* --- DESIGN SYSTEM VIBRANT --- */
         :root {
-            /* Couleurs plus vives demandées */
             --primary: #E11D48;
             --accent: #0F172A;
             
-            /* Codes couleurs Notes */
-            --c-high: #16a34a; /* Vert vif */
-            --c-med: #f59e0b;  /* Orange vif */
-            --c-low: #ef4444;  /* Rouge vif */
-            --c-new: #3b82f6;  /* Bleu électrique pour les lieux scannés */
+            /* Couleurs Bulles */
+            --c-high: #16a34a; /* Vert */
+            --c-med: #f59e0b;  /* Orange */
+            --c-low: #ef4444;  /* Rouge */
+            --c-new: #3b82f6;  /* Bleu (Scan) */
 
-            --bg-glass: rgba(255, 255, 255, 0.9);
             --shadow-hard: 0 4px 15px rgba(0, 0, 0, 0.12);
             --radius-md: 14px;
             --radius-xl: 24px;
@@ -43,7 +56,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { margin: 0; width: 100%; height: 100dvh; font-family: var(--font-body); background: #f2f2f2; overflow: hidden; position: fixed; }
 
-        /* --- MAP LAYER --- */
+        /* --- MAP --- */
         #map { position: absolute; inset: 0; z-index: 0; background: #e5e5e5; }
         .leaflet-interactive { cursor: pointer !important; pointer-events: auto !important; }
 
@@ -52,43 +65,35 @@
             position: absolute; inset: 0; z-index: 1000; pointer-events: none;
             display: flex; flex-direction: column;
         }
-
-        /* HEADER CORRIGÉ (CLICS) */
+        
+        /* HEADER (Clics forcés avec pointer-events) */
         .header-wrap {
             padding: max(10px, env(safe-area-inset-top)) 16px 10px;
             display: flex; flex-direction: column; gap: 12px;
-            pointer-events: none; /* Laisse passer les clics au travers du vide */
+            pointer-events: none; 
         }
 
-        .top-row {
-            display: flex; justify-content: space-between; align-items: center;
-            pointer-events: none;
-        }
+        .top-row { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         
         .app-title {
             font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--primary);
             background: white; padding: 6px 16px; border-radius: 30px; 
-            box-shadow: var(--shadow-hard); display: flex; align-items: center; gap: 8px;
-            pointer-events: auto; /* Titre cliquable si besoin */
+            box-shadow: var(--shadow-hard); display: flex; align-items: center; gap: 8px; pointer-events: auto;
         }
 
-        /* BTN DRIVE CORRIGÉ */
         .btn-icon {
             width: 44px; height: 44px; border-radius: 50%; background: white; border: none;
             color: #333; font-size: 18px; box-shadow: var(--shadow-hard);
-            transition: transform 0.1s; cursor: pointer;
-            pointer-events: auto !important; /* FORCE LE CLIC */
-            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; pointer-events: auto; /* IMPORTANT */
+            display: flex; align-items: center; justify-content: center; transition: 0.1s;
         }
-        .btn-icon:active { transform: scale(0.92); }
+        .btn-icon:active { transform: scale(0.9); }
         .btn-icon.connected { color: var(--c-high); border: 2px solid var(--c-high); }
         .btn-icon.syncing { color: var(--c-med); border: 2px solid var(--c-med); animation: rotate 1s infinite linear; }
 
-        /* SEARCH BAR CORRIGÉE */
         .search-bar {
             background: white; border-radius: var(--radius-md); 
-            box-shadow: var(--shadow-hard); display: flex; padding: 4px; gap: 4px;
-            pointer-events: auto !important; /* FORCE LE CLIC SUR LES INPUTS */
+            box-shadow: var(--shadow-hard); display: flex; padding: 4px; gap: 4px; pointer-events: auto;
         }
         .search-input-group {
             flex: 1; display: flex; align-items: center; background: #f3f4f6;
@@ -98,9 +103,8 @@
             border: none; background: transparent; width: 100%; height: 100%;
             font-family: var(--font-body); font-weight: 600; font-size: 14px; color: #333;
         }
-        .search-divider { width: 1px; background: #ddd; margin: 6px 0; }
 
-        /* CONTROLS (FAB) */
+        /* FABs */
         .fabs {
             position: absolute; bottom: 120px; right: 16px; 
             display: flex; flex-direction: column; gap: 12px; pointer-events: auto;
@@ -112,7 +116,7 @@
         }
         .fab-primary { background: var(--primary); color: white; }
 
-        /* MARKERS CUSTOM (COULEURS VIVES) */
+        /* MARKERS */
         .custom-pin {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 36px !important; height: 36px !important; 
@@ -121,25 +125,16 @@
         }
         .custom-pin:hover { transform: scale(1.15); z-index: 5000 !important; }
         
-        /* Bulle de couleur */
         .pin-bubble {
             width: 100%; height: 100%; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center;
             font-weight: 800; font-size: 13px; color: white;
-            border: 2px solid white; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        
-        /* Couleurs appliquées */
-        .pin-bubble.high { background: var(--c-high); } /* Vert */
-        .pin-bubble.med { background: var(--c-med); }  /* Orange */
-        .pin-bubble.low { background: var(--c-low); }  /* Rouge */
-        
-        /* Lieux scannés non enregistrés (Bleu vif) */
-        .pin-bubble.unsaved {
-            background: var(--c-new);
-            color: white;
-        }
+        .pin-bubble.high { background: var(--c-high); }
+        .pin-bubble.med { background: var(--c-med); }
+        .pin-bubble.low { background: var(--c-low); }
+        .pin-bubble.unsaved { background: var(--c-new); color: white; }
 
         /* BANNER */
         .banner {
@@ -147,7 +142,7 @@
             background: white; border-radius: var(--radius-xl); padding: 16px;
             box-shadow: var(--shadow-hard); pointer-events: auto;
             display: flex; align-items: center; gap: 14px;
-            transform: translateY(150%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(150%); transition: transform 0.3s;
         }
         .banner.active { transform: translateY(0); }
         .ban-img-wrap { width: 64px; height: 64px; border-radius: 16px; overflow: hidden; background: #eee; flex-shrink: 0; }
@@ -155,7 +150,7 @@
         .ban-content { flex: 1; overflow: hidden; }
         .ban-title { font-weight: 800; font-size: 16px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ban-subtitle { font-size: 13px; color: #666; margin-bottom: 4px; }
-        .ban-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #eee; display: inline-block; }
+        .ban-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block; }
 
         /* MODAL */
         .modal-overlay {
@@ -173,14 +168,32 @@
         .modal-overlay.open .sheet { transform: translateY(0); }
         .sheet-body { padding: 24px; overflow-y: auto; }
 
-        /* INPUTS MODAL */
+        /* INPUTS & SLIDERS (Barres de chargement style) */
         .modern-input {
             width: 100%; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 12px; font-family: var(--font-body); font-weight: 500; font-size: 15px; margin-bottom: 12px;
         }
-        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .slider-row span { width: 70px; font-size: 13px; font-weight: 600; }
-        input[type=range] { flex: 1; accent-color: var(--primary); }
+        
+        /* STYLE JAUGES (Barres) */
+        .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .slider-row span { width: 70px; font-size: 13px; font-weight: 700; color: #475569; }
+        
+        input[type=range] {
+            flex: 1; -webkit-appearance: none; height: 10px; border-radius: 5px; background: #e2e8f0; outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+            background: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 2px solid white; cursor: pointer;
+        }
+
+        /* CREATION */
+        .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:500; display:none; pointer-events:none; }
+        .target-center.visible { display:block; }
+        .pin-target { width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3); }
+        
+        .creation-ui { position:absolute; bottom:110px; left:0; right:0; text-align:center; display:none; pointer-events:auto; }
+        .creation-ui.visible { display:block; }
+        .btn-confirm { background:var(--primary); color:white; padding:12px 24px; border-radius:30px; border:none; font-weight:700; box-shadow:var(--shadow-hard); cursor: pointer; }
 
         /* LIST VIEW */
         .list-view {
@@ -191,14 +204,16 @@
         .list-view.open { transform: translateX(0); }
         .list-head { padding: 50px 20px 20px; background: white; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
         .list-body { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+        
         .list-card {
             background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px;
             display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9; cursor: pointer;
         }
 
-        /* BOTTOM NAV */
+        /* NAV */
         .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-glass);
+            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom);
             height: 80px; display: flex; justify-content: space-around; align-items: center; z-index: 3000;
@@ -207,43 +222,32 @@
         .nav-item.active { color: var(--primary); }
         .nav-item i { font-size: 22px; }
 
-        /* CREATION */
-        .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:500; display:none; pointer-events:none; }
-        .target-center.visible { display:block; }
-        .pin-target { width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3); }
-        .creation-ui { position:absolute; bottom:110px; left:0; right:0; text-align:center; display:none; pointer-events:auto; }
-        .creation-ui.visible { display:block; }
-        .btn-confirm { background:var(--primary); color:white; padding:12px 24px; border-radius:30px; border:none; font-weight:700; box-shadow:var(--shadow-hard); }
-        
         .toast { position: fixed; top: 120px; left: 50%; transform: translate(-50%, -20px); background: #333; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000; }
         .toast.visible { opacity: 1; transform: translate(-50%, 0); }
-
         @keyframes rotate { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- MAP -->
     <div id="map"></div>
 
-    <!-- UI LAYER -->
     <div class="ui-layer">
-        
         <!-- HEADER -->
         <div class="header-wrap">
             <div class="top-row">
                 <div class="app-title"><i class="fa-solid fa-star"></i> Guide SIL</div>
+                <!-- BOUTON DRIVE -->
                 <button class="btn-icon" id="drive-btn" onclick="Drive.handleAuth()">
                     <i class="fa-brands fa-google-drive"></i>
                 </button>
             </div>
-            
+            <!-- RECHERCHE -->
             <div class="search-bar">
                 <div class="search-input-group">
                     <i class="fa-solid fa-location-dot" style="color:#999; margin-right:8px"></i>
                     <input type="text" id="inp-city" placeholder="Ville...">
                 </div>
-                <div class="search-divider"></div>
+                <div style="width:1px; background:#ddd; margin:6px 0"></div>
                 <div class="search-input-group">
                     <i class="fa-solid fa-magnifying-glass" style="color:#999; margin-right:8px"></i>
                     <input type="text" id="inp-filter" placeholder="Nom..." oninput="App.applyFilters()">
@@ -251,7 +255,7 @@
             </div>
         </div>
 
-        <!-- CONTROLS -->
+        <!-- FABs -->
         <div class="fabs" id="main-ctrls">
             <button class="fab-btn fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
             <button class="fab-btn" onclick="App.locate()"><i class="fa-solid fa-crosshairs"></i></button>
@@ -274,10 +278,9 @@
             <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER ICI</button>
             <div style="margin-top:10px"><button class="btn-icon" style="margin:0 auto; width:36px; height:36px" onclick="App.cancelCreation()"><i class="fa-solid fa-xmark"></i></button></div>
         </div>
-
     </div>
 
-    <!-- LIST -->
+    <!-- LISTE -->
     <div class="list-view" id="list-view">
         <div class="list-head">
             <h2 style="margin:0; font-family:var(--font-display)">Mon Carnet</h2>
@@ -309,6 +312,8 @@
                     <span style="font-weight:700; font-size:12px; color:#999">NOTE</span>
                     <span id="score-display" style="font-weight:800; color:var(--primary)">0.0</span>
                 </div>
+                
+                <!-- BARRES DE CHARGEMENT (SLIDERS) -->
                 <div class="slider-row"><span>Goût</span><input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()"></div>
                 <div class="slider-row"><span>Service</span><input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()"></div>
                 <div class="slider-row"><span>Cadre</span><input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()"></div>
@@ -335,40 +340,45 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- DRIVE ---
+        // --- MODULE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FILE_NAME = "guide_michelin_sil_db.json";
-            
-            let tokenClient, token;
-            let fileId = null;
+            let tokenClient, token, fileId;
 
             const init = () => {
-                if(typeof google === 'undefined') return setTimeout(init, 500);
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID, scope: SCOPES, prompt: 'select_account',
-                    callback: async (resp) => {
-                        if(resp.error) return App.toast("Erreur Auth");
-                        token = resp.access_token;
-                        document.getElementById('drive-btn').classList.add('connected');
-                        App.toast("Connecté ! Sync...");
-                        await sync();
-                    }
-                });
+                if(typeof google === 'undefined') { setTimeout(init, 500); return; }
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID, scope: SCOPES, prompt: 'select_account',
+                        callback: async (resp) => {
+                            if(resp.error) { App.toast("Erreur Auth"); return; }
+                            token = resp.access_token;
+                            document.getElementById('drive-btn').classList.add('connected');
+                            App.toast("Connecté ! Sync...");
+                            await sync();
+                        }
+                    });
+                } catch(e) { console.error("Google Auth Error", e); }
             };
 
             const handleAuth = () => {
-                // Clic sur bouton Drive
-                if(token) { if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-icon'; } }
-                else if(tokenClient) tokenClient.requestAccessToken();
+                if(token) {
+                    if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-icon'; }
+                } else if(tokenClient) {
+                    tokenClient.requestAccessToken();
+                } else {
+                    alert("Google API non chargée. Vérifiez votre connexion.");
+                }
             };
 
             const getFileId = async () => {
                 const q = `name='${FILE_NAME}' and trashed=false`;
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
                 const d = await r.json();
-                if(d.files?.length) return d.files[0].id;
+                if(d.files && d.files.length) return d.files[0].id;
+                
                 const meta = { name: FILE_NAME, mimeType: 'application/json' };
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
@@ -388,7 +398,7 @@
                     let changed = false;
                     driveData.forEach(d => { if(!localData.find(l=>l.id===d.id)) { localData.push(d); changed = true; } });
                     if(changed) { await App.saveAll(localData); App.refresh(); }
-                } catch(e){}
+                } catch(e) { console.error(e); }
                 document.getElementById('drive-btn').classList.remove('syncing');
             };
 
@@ -398,14 +408,14 @@
                 try {
                     if(!fileId) fileId = await getFileId();
                     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                } catch(e){}
+                } catch(e) {}
                 document.getElementById('drive-btn').classList.remove('syncing');
             };
 
             return { init, handleAuth, save, sync };
         })();
 
-        // --- APP ---
+        // --- MODULE APP ---
         const App = (() => {
             let map, db;
             let markers = [];
@@ -417,18 +427,25 @@
             const DEF_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80";
 
             const init = async () => {
-                initMap();
-                await initDB();
-                await loadSaved();
-                updateMap(); 
-                Drive.init();
-                
-                // Clics Inputs
-                document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
+                try {
+                    initMap();
+                    await initDB();
+                    await loadSaved();
+                    updateMap();
+                    
+                    // Events
+                    document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
+                    
+                    // Init Google
+                    Drive.init();
+                } catch(e) {
+                    console.error("App Init Error", e);
+                    alert("Erreur de chargement. Rechargez la page.");
+                }
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_v27', 1);
+                const req = indexedDB.open('GuideSil_v28', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
@@ -491,20 +508,16 @@
                         if(score < 5) bubble = 'low';
                         html = `<div class="pin-bubble ${bubble}">${score}</div>`;
                     } else {
-                        // Scan = Bleu (unsaved)
                         html = `<div class="pin-bubble unsaved"><i class="fa-solid fa-utensils"></i></div>`;
                     }
                     
-                    // Si filtré mais pas match, on le rend transparent ou on le cache
                     let opacity = match ? 1 : 0.2; 
-                    
-                    if(match || isSaved) { // On garde les favoris même si filtré (optionnel, ici on montre tout)
-                         const m = L.marker([p.lat, p.lon], {
+                    if(match || isSaved) {
+                        const m = L.marker([p.lat, p.lon], {
                             icon: L.divIcon({className: 'custom-pin', html: html}),
                             opacity: opacity,
                             zIndexOffset: isSaved ? 1000 : 0
                         }).addTo(map);
-                        
                         m.on('click', () => { if(match) select(p, isSaved); });
                         markers.push({marker:m});
                     }
@@ -523,16 +536,18 @@
                     const s = selectedPlace.score.total;
                     badge.innerText = `Note: ${s}/10`;
                     badge.style.color = s>=8 ? 'var(--c-high)' : (s>=5 ? 'var(--c-med)' : 'var(--c-low)');
+                    badge.style.background = "#eee";
                 } else {
                     badge.innerText = "Non enregistré";
-                    badge.style.color = "#999";
+                    badge.style.color = "#fff";
+                    badge.style.background = "var(--c-new)";
                 }
                 
                 document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
                 document.getElementById('banner').classList.add('active');
             };
 
-            // UTILS
+            // ACTIONS
             const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').classList.add('visible'); document.getElementById('creation-ui').classList.add('visible'); };
             const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').classList.remove('visible'); document.getElementById('creation-ui').classList.remove('visible'); };
             const confirmCreation = () => {
@@ -586,3 +601,38 @@
 
             const renderList = () => {
                 const c=document.getElementById('list-body');
+                if(!savedPlaces.length) { c.innerHTML='<div style="text-align:center;color:#999;padding:40px">Vide</div>'; return; }
+                const grps={}; savedPlaces.forEach(p=>{
+                    let city="DIVERS"; if(p.addr){ const pt=p.addr.toUpperCase().split(' '); const i=pt.findIndex(x=>/^\d{5}$/.test(x)); if(i>-1 && pt[i+1]) city=pt[i+1]; }
+                    if(!grps[city]) grps[city]=[]; grps[city].push(p);
+                });
+                c.innerHTML=Object.keys(grps).sort().map(city=>`
+                    <div style="margin-bottom:20px"><div style="font-weight:700;color:var(--primary);margin-bottom:10px">${city}</div>
+                    ${grps[city].map(p=>`
+                        <div class="list-card" onclick="App.goto(${p.id})">
+                            <img src="${p.img||DEF_IMG}" style="width:60px;height:60px;object-fit:cover;border-radius:8px">
+                            <div style="flex:1">
+                                <div style="font-weight:700">${p.name}</div>
+                                <div style="font-size:12px;color:#666">${p.addr.substring(0,25)}...</div>
+                                <div style="font-size:11px;font-weight:700;color:var(--primary)">${p.score?.total||'-'}/10</div>
+                            </div>
+                        </div>`).join('')}
+                    </div>`).join('');
+            };
+            
+            const goto = (id) => { nav('map'); const p=savedPlaces.find(x=>x.id===id); if(p) setTimeout(()=>select(p,p),300); };
+            const searchCity = async (v) => { if(v.length<3)return; const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); const d=await r.json(); if(d.length) map.setView([d[0].lat, d[0].lon], 13); };
+            const locate = () => navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude], 15));
+            const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2500); };
+            const refresh = () => { updateMap(); toast("Sync OK"); };
+
+            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, locate, goto, toast };
+        })();
+
+        // GLOBAL EXPORT & START
+        window.Drive = Drive;
+        window.App = App;
+        window.onload = App.init;
+    </script>
+</body>
+</html>
