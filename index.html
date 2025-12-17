@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#cbd5e1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="icon" href="data:,">
     
-    <title>Guide SIL - V36 Kinetic</title>
+    <title>Guide SIL - V40 Corrected</title>
     
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
@@ -19,256 +19,196 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
-        /* --- KINETIC DESIGN SYSTEM --- */
+        /* --- VARIABLES --- */
         :root {
             --primary: #E11D48;
-            --scan-blue: #2563eb; 
+            --scan-blue: #3b82f6; 
             --dark: #0f172a;
             
-            /* Gradients Vivants */
-            --grad-app: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-            --grad-card: linear-gradient(145deg, #ffffff, #f8fafc);
+            /* FOND BLEU-GRIS FORCÉ ICI */
+            --bg-sidebar: #cbd5e1; 
             
-            /* Status Colors */
-            --c-good: #10b981; 
-            --c-avg: #f59e0b;
-            --c-bad: #ef4444;
+            --c-gold: #fbbf24;
+            --c-high: #10b981; 
+            --c-med: #f97316;
+            --c-low: #ef4444;
 
-            /* Ombres "Profondes" */
-            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-            --shadow-md: 0 12px 24px -6px rgba(15, 23, 42, 0.12);
-            --shadow-float: 0 20px 40px -10px rgba(15, 23, 42, 0.2);
-            
             --font-body: 'Plus Jakarta Sans', sans-serif;
             --font-display: 'Outfit', sans-serif;
-            
-            --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; width: 100vw; height: 100dvh; font-family: var(--font-body); background: var(--grad-app); overflow: hidden; display: flex; flex-direction: column; }
+        body { margin: 0; width: 100vw; height: 100dvh; font-family: var(--font-body); overflow: hidden; display: flex; flex-direction: column; }
 
-        /* --- ANIMATIONS GLOBALES --- */
-        @keyframes slideInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes pulseBlue { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-save { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-5deg); } 75% { transform: translateX(5px) rotate(5deg); } }
+        @keyframes pop { 0% { transform: scale(0.5); opacity:0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity:1; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* --- LAYOUT --- */
         .app-view { flex: 1; position: relative; display: none; opacity: 0; transition: opacity 0.3s; }
         .app-view.active { display: flex; opacity: 1; }
 
-        /* VIEW 1: MAP */
         #view-map { width: 100%; height: 100%; }
         
+        /* SIDEBAR BLEU-GRIS */
         .sidebar {
-            width: 380px; background: white; display: flex; flex-direction: column;
-            border-right: 1px solid #e2e8f0; z-index: 10;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.03);
+            width: 380px; 
+            background-color: var(--bg-sidebar) !important; /* Force BG */
+            display: flex; flex-direction: column;
+            border-right: 1px solid #94a3b8; z-index: 10;
         }
-        .map-wrapper { flex: 1; position: relative; background: #cbd5e1; }
+        .map-wrapper { flex: 1; position: relative; background: #e2e8f0; }
         #map { width: 100%; height: 100%; }
 
         @media (max-width: 768px) {
             #view-map { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid #e2e8f0; border-radius: 24px 24px 0 0; margin-top: -20px; z-index: 20; }
+            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid #94a3b8; }
             .map-wrapper { height: 60%; }
         }
 
-        /* --- SIDEBAR HEADER --- */
-        .sb-header { padding: 20px; background: white; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid #f1f5f9; }
-        
-        .brand-row { display: flex; justify-content: space-between; align-items: center; }
-        .brand { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 8px; }
-        
-        .btn-drive {
-            width: 40px; height: 40px; border-radius: 12px; background: #f1f5f9; border: none;
-            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #64748b;
-            cursor: pointer; transition: 0.3s var(--ease-elastic);
+        /* --- SIDEBAR COMPONENTS --- */
+        .sb-header { 
+            padding: 20px; 
+            background-color: var(--bg-sidebar) !important; /* Force BG */
+            display: flex; flex-direction: column; gap: 12px; 
         }
-        .btn-drive:hover { transform: scale(1.1); }
-        .btn-drive.connected { background: #dcfce7; color: #16a34a; }
-        .btn-drive.syncing { animation: spin 1s infinite linear; }
-
-        .search-group { display: flex; flex-direction: column; gap: 8px; }
-        .s-input {
-            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; height: 46px;
-            display: flex; align-items: center; padding: 0 14px; transition: 0.3s;
+        .brand { font-family: var(--font-display); font-size: 22px; font-weight: 900; display:flex; gap:10px; align-items:center; color: var(--dark); }
+        
+        .search-box {
+            background: white; border-radius: 12px; display: flex; align-items: center; padding: 0 12px; height: 44px;
+            border: 1px solid white; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .s-input:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1); background: white; }
-        .s-input i { color: #94a3b8; margin-right: 10px; }
-        .s-input input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); font-family: var(--font-body); }
+        .search-box:focus-within { border-color: var(--primary); }
+        .search-box input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); }
 
-        .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; }
+        .sb-list-content { 
+            flex: 1; overflow-y: auto; padding: 16px; 
+            background-color: var(--bg-sidebar) !important; /* Force BG */
+        }
 
-        /* CARDS (Interactive) */
+        /* CARD (Blanc sur fond Bleu-Gris) */
         .place-card {
-            background: white; border-radius: 16px; padding: 12px; margin-bottom: 14px;
-            display: flex; gap: 14px; align-items: center; cursor: pointer;
-            box-shadow: var(--shadow-sm); border: 1px solid transparent; 
-            transition: all 0.3s var(--ease-elastic);
-            animation: slideInUp 0.4s both; /* Waterfall anim */
+            background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px;
+            display: flex; gap: 12px; align-items: center; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #94a3b8;
+            transition: 0.2s;
         }
-        .place-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary); }
-        .place-card:active { transform: scale(0.96); }
+        .place-card:active { transform: scale(0.97); }
+        .place-card img { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #e2e8f0; }
         
-        .pc-img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #e2e8f0; }
-        .pc-info { flex: 1; min-width: 0; }
-        .pc-title { font-weight: 800; font-size: 16px; color: var(--dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pc-addr { font-size: 13px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* Note Bubble */
-        .pc-score { 
-            font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; 
-            background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 4px;
-        }
-        .sc-high { background: #dcfce7; color: #15803d; }
-        .sc-med { background: #fef3c7; color: #b45309; }
-        .sc-low { background: #fee2e2; color: #b91c1c; }
-        .sc-new { background: #dbeafe; color: #1d4ed8; }
+        .bd-gold { border-left-color: var(--c-gold); background: #fffbeb; }
+        .bd-high { border-left-color: var(--c-high); }
+        .bd-med { border-left-color: var(--c-med); }
+        .bd-low { border-left-color: var(--c-low); }
+        .bd-new { border-left-color: #94a3b8; }
+
+        .card-title { font-weight: 800; font-size: 15px; margin-bottom: 4px; color: var(--dark); }
+        .card-addr { font-size: 12px; color: #64748b; }
+        .score-pill { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; display: inline-block; margin-top: 4px; }
 
         /* --- MAP UI --- */
         .map-ui { position: absolute; inset: 0; pointer-events: none; z-index: 1000; }
         .pointer-auto { pointer-events: auto; }
 
-        /* Floating Controls */
         .fabs { position: absolute; bottom: 100px; right: 20px; display: flex; flex-direction: column; gap: 14px; }
         .fab {
             width: 56px; height: 56px; background: white; border-radius: 18px;
-            box-shadow: var(--shadow-float); display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: #334155; cursor: pointer; border: none; transition: 0.3s var(--ease-elastic);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #334155; cursor: pointer; border: none; transition: 0.3s;
         }
-        .fab:hover { transform: scale(1.1); }
-        .fab:active { transform: scale(0.9); }
-        .fab-primary { background: var(--primary); color: white; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4); }
+        .fab-primary { background: var(--primary); color: white; }
         
+        /* Loader */
         .loader-wrap {
-            position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50px);
-            background: var(--dark); color: white; padding: 10px 24px; border-radius: 30px;
-            font-size: 13px; font-weight: 700; box-shadow: var(--shadow-md);
-            display: flex; align-items: center; gap: 10px; transition: 0.4s var(--ease-elastic); opacity: 0;
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: white; color: var(--dark); padding: 10px 20px; border-radius: 30px;
+            font-size: 13px; font-weight: 700; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 10px; opacity: 0; transition: 0.3s;
         }
-        .loader-wrap.visible { transform: translate(-50%, 0); opacity: 1; }
+        .loader-wrap.visible { opacity: 1; top: 30px; }
 
-        /* Map Banner */
+        /* Banner */
         .map-banner {
             position: absolute; bottom: 100px; left: 20px; right: 90px; max-width: 400px;
-            background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); padding: 12px;
-            border-radius: 20px; box-shadow: var(--shadow-float); display: flex; align-items: center; gap: 14px;
-            transform: translateY(200%); transition: 0.5s var(--ease-elastic); border: 1px solid rgba(255,255,255,0.5);
+            background: white; padding: 12px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            display: flex; align-items: center; gap: 14px; transform: translateY(200%); transition: 0.4s;
         }
         .map-banner.active { transform: translateY(0); }
 
         /* MARKERS */
-        .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px !important; height: 44px !important; margin-left: -22px !important; margin-top: -22px !important; transition: transform 0.3s var(--ease-elastic); }
-        .custom-pin:hover { transform: scale(1.3); z-index: 5000 !important; }
+        .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
         
-        .pin-bubble {
-            width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 14px; color: white; border: 3px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        }
-        .mk-high { background: var(--c-good); }
-        .mk-med { background: var(--c-avg); }
-        .mk-low { background: var(--c-bad); }
-        
-        /* THE BLUE PULSE ICON */
-        .mk-scan { 
-            background: var(--scan-blue); color: white; font-size: 16px;
-            animation: pulseBlue 2s infinite; 
+        /* Point Scanné (Bleu standard) */
+        .pin-scan {
+            width: 30px; height: 30px; border-radius: 50%; background: var(--scan-blue);
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        /* --- CARNET VIEW (Onglet 2) --- */
-        #view-list { background: #f8fafc; flex-direction: column; }
-        .list-head-area { padding: 24px; background: white; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 20; }
-        .list-title { font-family: var(--font-display); font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--dark); }
-        
-        .stats-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .stat-badge { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #64748b; }
-        
-        .filter-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        /* SAVED MARKER (MASSIVE & ANIMATED) */
+        .pin-saved {
+            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 20px; color: white; 
+            border: 5px solid white; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Grosse ombre */
+            z-index: 9999 !important; /* Toujours au dessus */
+            animation: pulse-save 2s infinite; /* Battement */
+        }
+        .mk-gold { background: var(--c-gold); }
+        .mk-high { background: var(--c-high); }
+        .mk-med { background: var(--c-med); }
+        .mk-low { background: var(--c-low); }
+        .mk-new { background: #64748b; } 
+
+        /* --- CARNET VIEW --- */
+        #view-list { background: var(--bg-sidebar); flex-direction: column; }
+        .list-head-area { padding: 20px; background: white; border-bottom: 1px solid #e2e8f0; }
+        .filter-row { display: flex; gap: 10px; overflow-x: auto; padding-top: 10px; }
         .f-chip {
-            padding: 8px 18px; border-radius: 30px; background: white; border: 1px solid #e2e8f0;
-            font-weight: 600; font-size: 13px; color: #64748b; cursor: pointer; transition: 0.2s; white-space: nowrap;
+            padding: 8px 16px; border-radius: 20px; background: #f8fafc; border: 1px solid #e2e8f0;
+            font-weight: 700; font-size: 12px; color: #64748b; cursor: pointer; white-space: nowrap;
         }
-        .f-chip.active { background: var(--dark); color: white; border-color: var(--dark); transform: scale(1.05); }
-
+        .f-chip.active { background: var(--dark); color: white; border-color: var(--dark); }
         .carnet-grid { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-content: start; }
 
-        /* --- MODAL EDIT (VIBRANT) --- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999;
-            opacity: 0; pointer-events: none; transition: 0.3s;
-            display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(8px);
-        }
+        /* --- MODAL EDIT --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(5px); }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .sheet {
-            width: 100%; max-width: 550px; background: #fff;
-            border-radius: 32px 32px 0 0; max-height: 92vh; display: flex; flex-direction: column;
-            transform: translateY(100%); transition: transform 0.4s var(--ease-elastic);
-        }
+        .sheet { width: 100%; max-width: 550px; background: #fff; border-radius: 32px 32px 0 0; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s; }
         .modal-overlay.open .sheet { transform: translateY(0); }
 
-        /* Header Coloré */
         .sheet-hero {
-            padding: 30px 24px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-radius: 32px 32px 0 0; display: flex; justify-content: space-between; align-items: center;
+            padding: 40px; text-align: center; border-radius: 32px 32px 0 0; transition: background 0.5s;
+            position: relative; overflow: hidden;
         }
-        .score-big { font-family: var(--font-display); font-size: 48px; font-weight: 900; color: var(--dark); line-height: 1; }
-        .score-label { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-top: 5px; }
+        .score-display-big { font-family: var(--font-display); font-size: 60px; font-weight: 900; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .emoji-reaction { font-size: 40px; position: absolute; top: 20px; right: 20px; animation: pop 0.5s; }
+        
+        .hero-gold { background: linear-gradient(135deg, #fbbf24, #d97706); }
+        .hero-good { background: linear-gradient(135deg, #34d399, #059669); }
+        .hero-avg { background: linear-gradient(135deg, #fb923c, #ea580c); }
+        .hero-bad { background: linear-gradient(135deg, #f87171, #dc2626); animation: shake 0.5s; }
+        .hero-neutral { background: linear-gradient(135deg, #94a3b8, #64748b); }
 
         .sheet-body { padding: 24px; overflow-y: auto; }
+        .slider-group { margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 16px; }
+        input[type=range] { width: 100%; height: 10px; border-radius: 5px; -webkit-appearance: none; background: #cbd5e1; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 4px solid var(--dark); cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 
-        .form-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
-        .form-input {
-            width: 100%; padding: 16px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px;
-            font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--dark); outline: none; margin-bottom: 20px; transition: 0.2s;
-        }
-        .form-input:focus { border-color: var(--primary); background: white; }
+        .btn-save { width: 100%; padding: 18px; border-radius: 20px; background: var(--dark); color: white; font-weight: 800; border: none; margin-top: 10px; cursor: pointer; }
 
-        /* COLORFUL SLIDERS */
-        .slider-box { margin-bottom: 24px; }
-        .slider-label-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
-        
-        input[type=range] {
-            width: 100%; -webkit-appearance: none; height: 12px; border-radius: 10px; background: #e2e8f0; outline: none; margin: 0;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; 
-            background: white; border: 4px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: grab; transition: 0.1s;
-        }
-        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
-
-        /* Dynamic colors for sliders via JS */
-        
-        .btn-action { width: 100%; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; border: none; transition: 0.2s; margin-top: 10px; }
-        .btn-save { background: var(--dark); color: white; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3); }
-        .btn-save:active { transform: scale(0.98); }
-        .btn-del { background: transparent; color: var(--c-bad); margin-top: 0; }
-
-        /* BOTTOM NAV */
-        .bottom-nav {
-            height: 80px; background: white; border-top: 1px solid #e2e8f0;
-            display: flex; justify-content: space-around; align-items: center; z-index: 5000; padding-bottom: env(safe-area-inset-bottom);
-        }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; cursor: pointer; width: 80px; transition: 0.2s; }
-        .nav-item i { font-size: 24px; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* NAV */
+        .bottom-nav { height: 80px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; align-items: center; z-index: 5000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; cursor: pointer; width: 80px; }
         .nav-item.active { color: var(--primary); }
-        .nav-item.active i { transform: translateY(-4px) scale(1.1); }
 
-        /* Toast */
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--dark); color: white; padding: 12px 24px; border-radius: 40px; font-weight: 700; opacity: 0; z-index: 10000; transition: 0.4s var(--ease-elastic); }
-        .toast.visible { transform: translateX(-50%) translateY(20px); opacity: 1; }
-
-        /* Creation & Van */
-        .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index: 500; display:none; pointer-events:none; }
-        .target-center.visible { display:block; animation: popIn 0.3s; }
-        .pin-target { width:48px; height:48px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-48px; box-shadow:0 20px 40px rgba(225,29,72,0.4); }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; pointer-events: none; z-index: 10000; transition: 0.3s; }
+        .toast.visible { opacity: 1; top: 40px; }
+        
         .creation-ui { position:absolute; bottom:30px; left:0; right:0; text-align:center; display:none; pointer-events:auto; z-index: 2000; }
-        .creation-ui.visible { display:block; animation: slideInUp 0.3s; }
-
-        .user-pin { display: flex; align-items: center; justify-content: center; width: 50px !important; height: 50px !important; margin-left: -25px !important; margin-top: -25px !important; background: var(--dark); border: 3px solid white; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: white; font-size: 22px; }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .creation-ui.visible { display:block; }
     </style>
 </head>
 <body>
@@ -277,19 +217,17 @@
     <div class="app-view active" id="view-map">
         <div class="sidebar">
             <div class="sb-header">
-                <div class="brand-row">
-                    <div class="brand"><i class="fa-solid fa-earth-americas" style="color:var(--primary)"></i> Exploration</div>
-                    <button class="btn-drive" id="drive-btn" onclick="Drive.handleAuth()"><i class="fa-brands fa-google-drive"></i></button>
+                <div style="display:flex; justify-content:space-between">
+                    <div class="brand"><i class="fa-solid fa-map-location-dot"></i> Guide SIL</div>
+                    <button class="btn-drive" id="drive-btn" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; color:#64748b; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
                 </div>
-                <div class="search-group">
-                    <div class="s-input">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="inp-filter" placeholder="Chercher un lieu, un plat..." oninput="App.refreshUI()">
-                    </div>
-                    <div class="s-input">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <input type="text" id="inp-city" placeholder="Aller à une ville...">
-                    </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-earth-americas" style="color:#94a3b8; margin-right:10px"></i>
+                    <input type="text" id="inp-city" placeholder="Aller à une ville...">
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-filter" style="color:#94a3b8; margin-right:10px"></i>
+                    <input type="text" id="inp-filter" placeholder="Filtrer..." oninput="App.refreshUI()">
                 </div>
             </div>
             <div class="sb-list-content" id="sidebar-list"></div>
@@ -298,7 +236,7 @@
         <div class="map-wrapper">
             <div id="map"></div>
             <div class="map-ui">
-                <div class="loader-wrap" id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i> Scan des environs...</div>
+                <div class="loader-wrap" id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i> Chargement...</div>
                 
                 <div class="fabs pointer-auto" id="main-ctrls">
                     <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
@@ -311,13 +249,16 @@
                         <div style="font-weight:800; font-size:16px; margin-bottom:4px" id="ban-title">...</div>
                         <div style="font-size:13px; color:#64748b" id="ban-sub">...</div>
                     </div>
-                    <button onclick="App.openModal()" style="width:40px; height:40px; border-radius:12px; background:#f1f5f9; border:none; cursor:pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button onclick="App.openModal()" style="width:40px; height:40px; border-radius:12px; background:#f1f5f9; border:none; cursor:pointer"><i class="fa-solid fa-pen"></i></button>
                 </div>
 
-                <div class="target-center" id="target-marker"><div class="pin-target"></div></div>
+                <div class="target-center" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:500; display:none; pointer-events:none" id="target-marker">
+                    <div style="width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3)"></div>
+                </div>
+                
                 <div class="creation-ui" id="creation-ui">
-                    <button class="btn-save" style="width:auto; padding:14px 40px" onclick="App.confirmCreation()">VALIDER</button>
-                    <div style="margin-top:12px"><button onclick="App.cancelCreation()" style="background:white; border:none; padding:10px 20px; border-radius:20px; font-weight:700; color:#64748b; box-shadow:0 4px 10px rgba(0,0,0,0.1)">Annuler</button></div>
+                    <button class="btn-save" style="width:auto; padding:14px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.3)" onclick="App.confirmCreation()">VALIDER</button>
+                    <div style="margin-top:12px"><button onclick="App.cancelCreation()" style="background:white; border:none; padding:10px 20px; border-radius:20px; font-weight:700; color:#64748b">Annuler</button></div>
                 </div>
             </div>
         </div>
@@ -326,91 +267,62 @@
     <!-- VIEW 2: CARNET -->
     <div class="app-view" id="view-list">
         <div class="list-head-area">
-            <div class="list-title">Mon Carnet</div>
-            <div class="stats-row" id="stats-row">
-                <div class="stat-badge">0 Lieux</div>
-                <div class="stat-badge">0.0 Moyenne</div>
-            </div>
-            
-            <div class="s-input" style="margin-bottom:15px; background:white">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="global-search" placeholder="Rechercher dans tout le carnet..." oninput="App.renderGlobalList()">
-            </div>
-
+            <h1 style="margin:0 0 15px 0; font-family:var(--font-display); font-size:28px">Mon Carnet</h1>
             <div class="filter-row">
                 <div class="f-chip active" onclick="App.setSort('score', this)">Par Note</div>
-                <div class="f-chip" onclick="App.setSort('name', this)">Par Nom</div>
-                <div class="f-chip" onclick="App.setSort('date', this)">Récents</div>
+                <div class="f-chip" onclick="App.setSort('dist', this)">Distance (Geoloc)</div>
+                <div class="f-chip" onclick="App.setSort('smart', this)">Top à proximité</div>
+                <div class="f-chip" onclick="App.setSort('name', this)">Alphabétique</div>
             </div>
         </div>
         <div class="carnet-grid" id="global-list"></div>
     </div>
 
-    <!-- BOTTOM NAV -->
-    <div class="bottom-nav">
-        <div class="nav-item active" id="nav-map" onclick="App.switchTab('map')">
-            <i class="fa-solid fa-map-location-dot"></i><span>Carte</span>
-        </div>
-        <div class="nav-item" id="nav-list" onclick="App.switchTab('list')">
-            <i class="fa-solid fa-book-open"></i><span>Carnet</span>
-        </div>
-    </div>
-
-    <!-- MODAL EDIT VIBRANT -->
+    <!-- MODAL EDIT DYNAMIC -->
     <div class="modal-overlay" id="modal">
         <div class="sheet">
-            <div class="sheet-hero">
-                <div>
-                    <div class="score-big" id="count-score">0.0</div>
-                    <div class="score-label">Note Globale</div>
-                </div>
-                <button style="background:#fff; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; color:#94a3b8; font-size:18px" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="sheet-hero" id="modal-hero">
+                <div class="emoji-reaction" id="hero-emoji">😐</div>
+                <div class="score-display-big" id="count-score">0.0</div>
             </div>
             <div class="sheet-body">
-                <label class="form-label">Détails</label>
-                <input type="text" class="form-input" id="e-name" placeholder="Nom du lieu">
-                <input type="text" class="form-input" id="e-addr" placeholder="Adresse détectée">
+                <input type="text" style="width:100%; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:10px; font-weight:700" id="e-name" placeholder="Nom">
+                <input type="text" style="width:100%; padding:15px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px" id="e-addr" placeholder="Adresse">
 
-                <label class="form-label" style="margin-top:10px">Évaluation</label>
-                
-                <!-- Vivid Sliders -->
-                <div class="slider-box">
-                    <div class="slider-label-row">
-                        <span style="color:#f43f5e">Goût</span>
-                        <span id="val-taste">5.0</span>
-                    </div>
-                    <input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()" style="accent-color:#f43f5e">
+                <div class="slider-group">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Goût</span><span id="v-taste">5</span></div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()">
+                </div>
+                <div class="slider-group">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Service</span><span id="v-qp">5</span></div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()">
+                </div>
+                <div class="slider-group">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Cadre</span><span id="v-vibe">5</span></div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()">
                 </div>
 
-                <div class="slider-box">
-                    <div class="slider-label-row">
-                        <span style="color:#f59e0b">Service</span>
-                        <span id="val-qp">5.0</span>
-                    </div>
-                    <input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()" style="accent-color:#f59e0b">
+                <div style="display:flex; gap:10px; margin-bottom:20px">
+                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-min" placeholder="Min €">
+                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-max" placeholder="Max €">
                 </div>
 
-                <div class="slider-box">
-                    <div class="slider-label-row">
-                        <span style="color:#8b5cf6">Cadre</span>
-                        <span id="val-vibe">5.0</span>
-                    </div>
-                    <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()" style="accent-color:#8b5cf6">
+                <button class="btn-save" onclick="App.save()">ENREGISTRER</button>
+                <div style="text-align:center; margin-top:15px">
+                    <button style="background:none; border:none; color:var(--c-low); font-weight:700; cursor:pointer" onclick="App.remove()">Supprimer</button>
+                    <button style="background:none; border:none; color:#94a3b8; margin-left:20px; font-weight:600; cursor:pointer" onclick="App.closeModal()">Fermer</button>
                 </div>
-
-                <label class="form-label" style="margin-top:10px">Budget</label>
-                <div style="display:flex; gap:15px">
-                    <input type="number" class="form-input" id="p-min" placeholder="Min €">
-                    <input type="number" class="form-input" id="p-max" placeholder="Max €">
-                </div>
-
-                <button class="btn-action btn-save" onclick="App.save()">SAUVEGARDER</button>
-                <button class="btn-action btn-del" onclick="App.remove()">Supprimer ce lieu</button>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast">Notification</div>
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="nav-map" onclick="App.switchTab('map')"><i class="fa-solid fa-map"></i><span>Carte</span></div>
+        <div class="nav-item" id="nav-list" onclick="App.switchTab('list')"><i class="fa-solid fa-book-open"></i><span>Carnet</span></div>
+    </div>
+
+    <div class="toast" id="toast">Msg</div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -418,7 +330,7 @@
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-            const FILE_NAME = "guide_sil_v36.json";
+            const FILE_NAME = "guide_michelin_sil_db.json";
             let tokenClient, token, fileId;
 
             const init = () => {
@@ -429,14 +341,14 @@
                         callback: async (resp) => {
                             if(resp.error) return App.toast("Erreur Auth");
                             token = resp.access_token;
-                            document.getElementById('drive-btn').classList.add('connected');
-                            App.toast("Synchronisé avec Drive");
+                            document.getElementById('drive-btn').style.color = '#10b981';
+                            App.toast("Drive Connecté");
                             await sync();
                         }
                     });
                 } catch(e){}
             };
-            const handleAuth = () => { if(token) { if(confirm("Déconnexion ?")){token=null; document.getElementById('drive-btn').classList.remove('connected');} } else if(tokenClient) tokenClient.requestAccessToken(); };
+            const handleAuth = () => { if(token) { if(confirm("Déconnexion ?")){token=null; document.getElementById('drive-btn').style.color = '#64748b';} } else if(tokenClient) tokenClient.requestAccessToken(); };
             const getFileId = async () => {
                 const q = `name='${FILE_NAME}' and trashed=false`;
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -451,7 +363,6 @@
             };
             const sync = async () => {
                 if(!token) return;
-                document.getElementById('drive-btn').classList.add('syncing');
                 try {
                     if(!fileId) fileId = await getFileId();
                     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
@@ -461,21 +372,18 @@
                     driveData.forEach(d => { if(!localData.find(l=>l.id===d.id)) { localData.push(d); changed = true; } });
                     if(changed) { await App.saveAll(localData); App.refresh(); }
                 } catch(e){}
-                document.getElementById('drive-btn').classList.remove('syncing');
             };
             const save = async (data) => {
                 if(!token) return;
-                document.getElementById('drive-btn').classList.add('syncing');
                 try {
                     if(!fileId) fileId = await getFileId();
                     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 } catch(e){}
-                document.getElementById('drive-btn').classList.remove('syncing');
             };
             return { init, handleAuth, save, sync };
         })();
 
-        // --- APP LOGIC ---
+        // --- APP ENGINE ---
         const App = (() => {
             let map, db;
             let markers = [];
@@ -486,9 +394,7 @@
             let isLocating = false;
             let userMarker = null;
             let sortMode = 'score';
-            let countUpInterval;
-
-            const DEF_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80";
+            let lastCenter = null;
 
             const init = async () => {
                 try {
@@ -506,7 +412,7 @@
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V36', 1);
+                const req = indexedDB.open('GuideSil_V40', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
@@ -521,7 +427,7 @@
                 tx.oncomplete = () => { savedPlaces = data; r(); };
             });
 
-            // --- NAVIGATION ---
+            // TABS
             const switchTab = (tab) => {
                 document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -536,12 +442,11 @@
                 }
             };
 
-            // --- MAP ---
+            // MAP
             const initMap = () => {
                 map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 15);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
                 map.on('moveend', () => { if(!isLocating && !isCreating && map.getZoom() > 13) scan(); });
-                map.on('dragstart', () => { if(isLocating) { isLocating=false; document.getElementById('btn-loc').classList.remove('active-loc'); } });
                 setTimeout(scan, 1000);
             };
 
@@ -552,6 +457,7 @@
             }
 
             const scan = async () => {
+                lastCenter = map.getCenter();
                 const b = map.getBounds().pad(0.5);
                 const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
                 document.getElementById('loader').classList.add('visible');
@@ -579,32 +485,28 @@
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
                 const bounds = map.getBounds();
-                const term = document.getElementById('inp-filter').value.toLowerCase();
-                const visibleInList = savedPlaces.filter(p => bounds.contains([p.lat, p.lon]) && (!term || p.name.toLowerCase().includes(term)));
+                const visibleInList = savedPlaces.filter(p => bounds.contains([p.lat, p.lon]));
                 renderSidebarList(visibleInList);
 
                 const allPlaces = [...savedPlaces, ...scannedCache];
                 allPlaces.forEach(p => {
                     const isSaved = savedPlaces.find(s=>s.id===p.id);
-                    const match = !term || (p.name && p.name.toLowerCase().includes(term));
-                    
                     let html;
                     if(isSaved) {
                         const s = p.score?.total || 0;
-                        let cls = s>=8?'mk-high':(s>=5?'mk-med':'mk-low');
-                        html = `<div class="pin-bubble ${cls}">${s}</div>`;
+                        // NEW LOGIC: Created marker = BIG PULSING CIRCLE
+                        let cls = s==0 ? 'mk-new' : (s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
+                        let txt = s==0 ? '<i class="fa-solid fa-plus"></i>' : s;
+                        html = `<div class="pin-saved ${cls}">${txt}</div>`;
                     } else {
+                        // SCANNED = SMALL BLUE
                         const icon = getIcon(p.type);
-                        // THE REQUESTED BLUE ICON
-                        html = `<div class="pin-bubble mk-scan"><i class="fa-solid ${icon}"></i></div>`;
+                        html = `<div class="pin-scan"><i class="fa-solid ${icon}"></i></div>`;
                     }
                     
-                    let op = match ? 1 : 0.2;
-                    if(match || isSaved) {
-                        const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:'custom-pin', html:html}), opacity:op, zIndexOffset: isSaved?1000:0}).addTo(map);
-                        m.on('click', ()=>select(p, isSaved));
-                        markers.push({marker:m});
-                    }
+                    const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset: isSaved?5000:0}).addTo(map);
+                    m.on('click', ()=>select(p, isSaved));
+                    markers.push({marker:m});
                 });
             };
 
@@ -612,54 +514,62 @@
                 const container = document.getElementById('sidebar-list');
                 listData.sort((a,b) => (b.score?.total || 0) - (a.score?.total || 0));
                 
-                if(!listData.length) { container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8"><i class="fa-solid fa-ghost" style="font-size:24px; margin-bottom:10px"></i><br>Zone vide</div>`; return; }
+                if(!listData.length) { container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b">Aucun favori ici.</div>`; return; }
 
                 container.innerHTML = listData.map((p, i) => {
                     const s = p.score?.total || 0;
-                    let clsTag = s>=8?'sc-high':(s>=5?'sc-med':'sc-low');
-                    // STAGGERED ANIMATION
+                    let clsBd = s==0 ? 'bd-new' : (s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                     return `
-                    <div class="place-card" style="animation-delay:${i*50}ms" onclick="App.flyToPlace(${p.id})">
-                        <img src="${p.img || DEF_IMG}" class="pc-img">
-                        <div class="pc-info">
-                            <div class="pc-title">${p.name}</div>
-                            <div class="pc-addr">${p.addr.substring(0,35)}...</div>
-                            <div class="pc-score ${clsTag}"><i class="fa-solid fa-star" style="font-size:10px"></i> ${s}</div>
+                    <div class="place-card ${clsBd}" onclick="App.flyToPlace(${p.id})">
+                        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80">
+                        <div class="card-info">
+                            <div class="card-title">${p.name}</div>
+                            <div class="card-addr">${p.addr.substring(0,30)}...</div>
+                            <span class="score-pill">${s==0 ? 'Nouveau' : s+'/10'}</span>
                         </div>
                     </div>`
                 }).join('');
             };
 
-            // --- CARNET GRID ---
+            // --- GLOBAL LIST ---
             const setSort = (m, el) => { sortMode = m; document.querySelectorAll('.f-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderGlobalList(); };
 
             const renderGlobalList = () => {
                 const container = document.getElementById('global-list');
-                const term = document.getElementById('global-search').value.toLowerCase();
-                let data = savedPlaces.filter(p => !term || (p.name && p.name.toLowerCase().includes(term)) || (p.addr && p.addr.toLowerCase().includes(term)));
-                
-                // Stats
-                const avg = data.length ? (data.reduce((acc, c) => acc + (parseFloat(c.score?.total)||0), 0) / data.length).toFixed(1) : 0;
-                document.getElementById('stats-row').innerHTML = `<div class="stat-badge">${data.length} Lieux</div><div class="stat-badge">${avg} Moyenne</div>`;
+                const center = map.getCenter();
+                let data = [...savedPlaces];
 
                 data.sort((a,b) => {
                     if(sortMode === 'score') return (b.score?.total || 0) - (a.score?.total || 0);
                     if(sortMode === 'name') return a.name.localeCompare(b.name);
-                    if(sortMode === 'date') return b.id - a.id;
+                    
+                    if(sortMode === 'dist') {
+                        const dA = map.distance(center, [a.lat, a.lon]);
+                        const dB = map.distance(center, [b.lat, b.lon]);
+                        return dA - dB;
+                    }
+                    
+                    if(sortMode === 'smart') {
+                        const dA = map.distance(center, [a.lat, a.lon]);
+                        const dB = map.distance(center, [b.lat, b.lon]);
+                        const wA = (a.score?.total||0)*100 - (dA/50);
+                        const wB = (b.score?.total||0)*100 - (dB/50);
+                        return wB - wA;
+                    }
                 });
 
                 if(!data.length) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#999; grid-column:1/-1">Carnet vide</div>'; return; }
                 
                 container.innerHTML = data.map((p, i) => {
                     const s = p.score?.total || 0;
-                    let clsTag = s>=8?'sc-high':(s>=5?'sc-med':'sc-low');
+                    let clsBd = s==0 ? 'bd-new' : (s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                     return `
-                    <div class="place-card" style="animation-delay:${i*40}ms" onclick="App.flyToPlace(${p.id})">
-                        <img src="${p.img || DEF_IMG}" class="pc-img">
-                        <div class="pc-info">
-                            <div class="pc-title">${p.name}</div>
-                            <div class="pc-addr">${p.addr}</div>
-                            <div class="pc-score ${clsTag}">${s} / 10</div>
+                    <div class="place-card ${clsBd}" onclick="App.flyToPlace(${p.id})">
+                        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80">
+                        <div class="card-info">
+                            <div class="card-title">${p.name}</div>
+                            <div class="card-addr">${p.addr}</div>
+                            <div class="score-pill">${s==0 ? 'Nouveau' : s+'/10'}</div>
                         </div>
                     </div>`
                 }).join('');
@@ -670,7 +580,7 @@
                 map.flyTo([p.lat-0.002, p.lon], 16);
                 document.getElementById('ban-title').innerText = p.name || "Inconnu";
                 document.getElementById('ban-sub').innerText = p.addr || "Lieu détecté";
-                document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
+                document.getElementById('ban-img').src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80";
                 document.getElementById('banner').classList.add('active');
             };
 
@@ -679,52 +589,72 @@
                 if(p) { switchTab('map'); setTimeout(() => select(p, p), 300); }
             };
 
-            // --- EDITING LOGIC (DYNAMIC SLIDERS) ---
+            // --- EDITING ---
             const openModal = () => {
                 const p = selectedPlace;
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-addr').value = p.addr||"";
+                
                 const s = p.score || {qp:5, taste:5, vibe:5};
-                document.getElementById('r-taste').value=s.taste; 
-                document.getElementById('r-qp').value=s.qp; 
-                document.getElementById('r-vibe').value=s.vibe;
+                document.getElementById('r-taste').value=s.taste || 5; 
+                document.getElementById('r-qp').value=s.qp || 5; 
+                document.getElementById('r-vibe').value=s.vibe || 5;
                 document.getElementById('p-min').value = p.price?.min||""; document.getElementById('p-max').value = p.price?.max||"";
                 
                 calc();
                 document.getElementById('modal').classList.add('open');
-                
-                // Count Up Animation
-                let start = 0; const end = parseFloat(s.total||0);
-                clearInterval(countUpInterval);
-                countUpInterval = setInterval(() => {
-                    start += 0.2;
-                    if(start >= end) { start = end; clearInterval(countUpInterval); }
-                    document.getElementById('count-score').innerText = start.toFixed(1);
-                }, 20);
             };
             const closeModal = () => document.getElementById('modal').classList.remove('open');
             
             const calc = () => {
-                const t=parseFloat(document.getElementById('r-taste').value), q=parseFloat(document.getElementById('r-qp').value), v=parseFloat(document.getElementById('r-vibe').value);
-                const tot=((t+q+v)/3).toFixed(1); 
+                const t=parseFloat(document.getElementById('r-taste').value);
+                const q=parseFloat(document.getElementById('r-qp').value);
+                const v=parseFloat(document.getElementById('r-vibe').value);
                 
-                document.getElementById('val-taste').innerText = t;
-                document.getElementById('val-qp').innerText = q;
-                document.getElementById('val-vibe').innerText = v;
-                document.getElementById('count-score').innerText = tot;
+                document.getElementById('v-taste').innerText = t;
+                document.getElementById('v-qp').innerText = q;
+                document.getElementById('v-vibe').innerText = v;
+
+                const tot = ((t+q+v)/3).toFixed(1);
+                const scoreDisplay = document.getElementById('count-score');
+                scoreDisplay.innerText = tot;
+                
+                const hero = document.getElementById('modal-hero');
+                const emoji = document.getElementById('hero-emoji');
+                
+                hero.className = 'sheet-hero'; // reset
+                if(tot >= 8) {
+                    hero.classList.add('hero-gold');
+                    emoji.innerText = tot >= 9 ? '👑' : '🤩';
+                } else if(tot >= 5) {
+                    hero.classList.add('hero-good');
+                    emoji.innerText = '😋';
+                } else if(tot >= 4) {
+                    hero.classList.add('hero-avg');
+                    emoji.innerText = '😐';
+                } else {
+                    hero.classList.add('hero-bad');
+                    emoji.innerText = tot <= 2 ? '🤮' : '💩';
+                }
                 
                 return {taste:t, qp:q, vibe:v, total:tot};
             };
             
             const save = () => {
-                const u = { ...selectedPlace, name:document.getElementById('e-name').value, addr:document.getElementById('e-addr').value, score:calc(), price:{min:document.getElementById('p-min').value, max:document.getElementById('p-max').value}, img:selectedPlace.img };
+                const u = { 
+                    ...selectedPlace, 
+                    name:document.getElementById('e-name').value, 
+                    addr:document.getElementById('e-addr').value, 
+                    score:calc(), 
+                    price:{min:document.getElementById('p-min').value, max:document.getElementById('p-max').value}
+                };
                 const idx = savedPlaces.findIndex(x=>x.id===u.id); if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
                 const tx = db.transaction('places', 'readwrite'); tx.objectStore('places').put(u);
-                closeModal(); updateMap(); renderGlobalList(); select(u,u); Drive.save(savedPlaces); toast("Sauvegardé avec succès");
+                closeModal(); updateMap(); renderGlobalList(); select(u,u); Drive.save(savedPlaces); toast("Lieu sauvegardé !");
             };
 
             const remove = () => {
-                if(!confirm("Supprimer ce lieu ?")) return;
+                if(!confirm("Supprimer ?")) return;
                 db.transaction('places', 'readwrite').objectStore('places').delete(selectedPlace.id);
                 savedPlaces = savedPlaces.filter(x=>x.id!==selectedPlace.id);
                 closeModal(); document.getElementById('banner').classList.remove('active'); updateMap(); renderGlobalList(); Drive.save(savedPlaces); toast("Lieu supprimé");
@@ -734,11 +664,29 @@
             const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').classList.add('visible'); document.getElementById('creation-ui').classList.add('visible'); };
             const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').classList.remove('visible'); document.getElementById('creation-ui').classList.remove('visible'); };
             const confirmCreation = () => { const c=map.getCenter(); const newP={ id:Date.now(), name:"", addr:"Position", type:'restaurant', lat:c.lat, lon:c.lng, score:{qp:5, taste:5, vibe:5, total:0}, price:{min:'', max:''} }; cancelCreation(); savedPlaces.push(newP); select(newP, newP); openModal(); };
-            const toggleLocate = () => { if(isLocating){ isLocating=false; document.getElementById('btn-loc').style.background='white'; document.getElementById('btn-loc').style.color='#334155'; } else { isLocating=true; document.getElementById('btn-loc').style.background=getComputedStyle(document.documentElement).getPropertyValue('--scan-blue'); document.getElementById('btn-loc').style.color='white'; navigator.geolocation.getCurrentPosition(p=>{ const lat=p.coords.latitude, lon=p.coords.longitude; map.setView([lat,lon], 16); if(userMarker)map.removeLayer(userMarker); const html=`<div class="user-pin"><i class="fa-solid fa-truck-fast"></i></div>`; userMarker=L.marker([lat,lon],{icon:L.divIcon({className:'van', html:html, iconSize:[50,50]}), zIndexOffset:2000}).addTo(map); scan(); }); } };
-            const searchCity = async (v) => { if(v.length<3)return; const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); const d=await r.json(); if(d.length){ map.setView([d[0].lat, d[0].lon], 14); scannedCache=[]; } };
+            
+            const toggleLocate = () => { 
+                if(isLocating){ isLocating=false; document.getElementById('btn-loc').style.background='white'; document.getElementById('btn-loc').style.color='#334155'; } 
+                else { 
+                    isLocating=true; document.getElementById('btn-loc').style.background=getComputedStyle(document.documentElement).getPropertyValue('--scan-blue'); document.getElementById('btn-loc').style.color='white'; 
+                    navigator.geolocation.getCurrentPosition(p=>{ const lat=p.coords.latitude, lon=p.coords.longitude; map.setView([lat,lon], 16); }); 
+                } 
+            };
+            
+            const searchCity = async (v) => { 
+                if(v.length<3)return; 
+                const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); 
+                const d=await r.json(); 
+                if(d.length){ 
+                    document.getElementById('banner').classList.remove('active'); // CLOSE BANNER
+                    selectedPlace = null; // DESELECT
+                    map.setView([d[0].lat, d[0].lon], 14); 
+                    scannedCache=[]; 
+                } 
+            };
             const refreshUI = () => updateMap();
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2500); };
-            const refresh = () => { updateMap(); renderGlobalList(); toast("Synchronisation terminée"); };
+            const refresh = () => { updateMap(); renderGlobalList(); toast("Sync OK"); };
 
             return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, toggleLocate, flyToPlace, toast, refreshUI };
         })();
