@@ -5,336 +5,412 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" href="data:,">
     
-    <title>Guide Michelin SIL - V29 Van</title>
+    <title>Guide SIL - V36 Kinetic</title>
     
-    <!-- FONTS & ICONS -->
+    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <!-- GOOGLE AUTH -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- KINETIC DESIGN SYSTEM --- */
         :root {
             --primary: #E11D48;
-            --accent: #0F172A;
-            --c-high: #16a34a; 
-            --c-med: #f59e0b;
-            --c-low: #ef4444;
-            --c-new: #3b82f6; 
+            --scan-blue: #2563eb; 
+            --dark: #0f172a;
+            
+            /* Gradients Vivants */
+            --grad-app: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            --grad-card: linear-gradient(145deg, #ffffff, #f8fafc);
+            
+            /* Status Colors */
+            --c-good: #10b981; 
+            --c-avg: #f59e0b;
+            --c-bad: #ef4444;
 
-            --shadow-hard: 0 4px 15px rgba(0, 0, 0, 0.12);
-            --radius-md: 14px;
-            --radius-xl: 24px;
-            --font-body: 'Inter', sans-serif;
-            --font-display: 'Playfair Display', serif;
+            /* Ombres "Profondes" */
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 12px 24px -6px rgba(15, 23, 42, 0.12);
+            --shadow-float: 0 20px 40px -10px rgba(15, 23, 42, 0.2);
+            
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+            
+            --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; width: 100%; height: 100dvh; font-family: var(--font-body); background: #f2f2f2; overflow: hidden; position: fixed; }
+        body { margin: 0; width: 100vw; height: 100dvh; font-family: var(--font-body); background: var(--grad-app); overflow: hidden; display: flex; flex-direction: column; }
 
-        /* --- MAP --- */
-        #map { position: absolute; inset: 0; z-index: 0; background: #e5e5e5; }
-        .leaflet-interactive { cursor: pointer !important; pointer-events: auto !important; }
+        /* --- ANIMATIONS GLOBALES --- */
+        @keyframes slideInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulseBlue { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-        /* --- UI LAYER --- */
-        .ui-layer {
-            position: absolute; inset: 0; z-index: 1000; pointer-events: none;
-            display: flex; flex-direction: column;
-        }
+        /* --- LAYOUT --- */
+        .app-view { flex: 1; position: relative; display: none; opacity: 0; transition: opacity 0.3s; }
+        .app-view.active { display: flex; opacity: 1; }
+
+        /* VIEW 1: MAP */
+        #view-map { width: 100%; height: 100%; }
         
-        /* HEADER */
-        .header-wrap {
-            padding: max(10px, env(safe-area-inset-top)) 16px 10px;
-            display: flex; flex-direction: column; gap: 12px;
-            pointer-events: none; 
+        .sidebar {
+            width: 380px; background: white; display: flex; flex-direction: column;
+            border-right: 1px solid #e2e8f0; z-index: 10;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.03);
+        }
+        .map-wrapper { flex: 1; position: relative; background: #cbd5e1; }
+        #map { width: 100%; height: 100%; }
+
+        @media (max-width: 768px) {
+            #view-map { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid #e2e8f0; border-radius: 24px 24px 0 0; margin-top: -20px; z-index: 20; }
+            .map-wrapper { height: 60%; }
         }
 
-        .top-row { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+        /* --- SIDEBAR HEADER --- */
+        .sb-header { padding: 20px; background: white; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid #f1f5f9; }
         
-        .app-title {
-            font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--primary);
-            background: white; padding: 6px 16px; border-radius: 30px; 
-            box-shadow: var(--shadow-hard); display: flex; align-items: center; gap: 8px; pointer-events: auto;
+        .brand-row { display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+        
+        .btn-drive {
+            width: 40px; height: 40px; border-radius: 12px; background: #f1f5f9; border: none;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #64748b;
+            cursor: pointer; transition: 0.3s var(--ease-elastic);
         }
+        .btn-drive:hover { transform: scale(1.1); }
+        .btn-drive.connected { background: #dcfce7; color: #16a34a; }
+        .btn-drive.syncing { animation: spin 1s infinite linear; }
 
-        .btn-icon {
-            width: 44px; height: 44px; border-radius: 50%; background: white; border: none;
-            color: #333; font-size: 18px; box-shadow: var(--shadow-hard);
-            cursor: pointer; pointer-events: auto;
-            display: flex; align-items: center; justify-content: center; transition: 0.1s;
+        .search-group { display: flex; flex-direction: column; gap: 8px; }
+        .s-input {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; height: 46px;
+            display: flex; align-items: center; padding: 0 14px; transition: 0.3s;
         }
-        .btn-icon:active { transform: scale(0.9); }
-        .btn-icon.connected { color: var(--c-high); border: 2px solid var(--c-high); }
-        .btn-icon.syncing { color: var(--c-med); border: 2px solid var(--c-med); animation: rotate 1s infinite linear; }
-        .btn-icon.active-loc { background: var(--c-new); color: white; border: 2px solid white; }
+        .s-input:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1); background: white; }
+        .s-input i { color: #94a3b8; margin-right: 10px; }
+        .s-input input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); font-family: var(--font-body); }
 
-        /* SEARCH BAR */
-        .search-bar {
-            background: white; border-radius: var(--radius-md); 
-            box-shadow: var(--shadow-hard); display: flex; padding: 4px; gap: 4px; pointer-events: auto;
-        }
-        .search-input-group {
-            flex: 1; display: flex; align-items: center; background: #f3f4f6;
-            border-radius: 10px; padding: 0 12px; height: 44px;
-        }
-        .search-input-group input {
-            border: none; background: transparent; width: 100%; height: 100%;
-            font-family: var(--font-body); font-weight: 600; font-size: 14px; color: #333;
-        }
+        .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; }
 
-        /* LOADER (NEW) */
-        .loader-pill {
-            align-self: center; background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
-            border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;
-            opacity: 0; transition: 0.3s; pointer-events: none; margin-top: 10px;
+        /* CARDS (Interactive) */
+        .place-card {
+            background: white; border-radius: 16px; padding: 12px; margin-bottom: 14px;
+            display: flex; gap: 14px; align-items: center; cursor: pointer;
+            box-shadow: var(--shadow-sm); border: 1px solid transparent; 
+            transition: all 0.3s var(--ease-elastic);
+            animation: slideInUp 0.4s both; /* Waterfall anim */
         }
-        .loader-pill.visible { opacity: 1; }
-        .spin { animation: rotate 1s infinite linear; }
+        .place-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+        .place-card:active { transform: scale(0.96); }
+        
+        .pc-img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #e2e8f0; }
+        .pc-info { flex: 1; min-width: 0; }
+        .pc-title { font-weight: 800; font-size: 16px; color: var(--dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pc-addr { font-size: 13px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Note Bubble */
+        .pc-score { 
+            font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; 
+            background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 4px;
+        }
+        .sc-high { background: #dcfce7; color: #15803d; }
+        .sc-med { background: #fef3c7; color: #b45309; }
+        .sc-low { background: #fee2e2; color: #b91c1c; }
+        .sc-new { background: #dbeafe; color: #1d4ed8; }
 
-        /* FABs */
-        .fabs {
-            position: absolute; bottom: 120px; right: 16px; 
-            display: flex; flex-direction: column; gap: 12px; pointer-events: auto;
-        }
-        .fab-btn {
-            width: 50px; height: 50px; border-radius: 18px; background: white;
-            color: #1e293b; font-size: 18px; box-shadow: var(--shadow-hard);
-            border: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;
-        }
-        .fab-primary { background: var(--primary); color: white; }
+        /* --- MAP UI --- */
+        .map-ui { position: absolute; inset: 0; pointer-events: none; z-index: 1000; }
+        .pointer-auto { pointer-events: auto; }
 
-        /* RESTAURANT MARKERS */
-        .custom-pin {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 36px !important; height: 36px !important; 
-            margin-left: -18px !important; margin-top: -18px !important;
-            transition: transform 0.2s;
+        /* Floating Controls */
+        .fabs { position: absolute; bottom: 100px; right: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .fab {
+            width: 56px; height: 56px; background: white; border-radius: 18px;
+            box-shadow: var(--shadow-float); display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #334155; cursor: pointer; border: none; transition: 0.3s var(--ease-elastic);
         }
-        .custom-pin:hover { transform: scale(1.15); z-index: 5000 !important; }
+        .fab:hover { transform: scale(1.1); }
+        .fab:active { transform: scale(0.9); }
+        .fab-primary { background: var(--primary); color: white; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4); }
+        
+        .loader-wrap {
+            position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50px);
+            background: var(--dark); color: white; padding: 10px 24px; border-radius: 30px;
+            font-size: 13px; font-weight: 700; box-shadow: var(--shadow-md);
+            display: flex; align-items: center; gap: 10px; transition: 0.4s var(--ease-elastic); opacity: 0;
+        }
+        .loader-wrap.visible { transform: translate(-50%, 0); opacity: 1; }
+
+        /* Map Banner */
+        .map-banner {
+            position: absolute; bottom: 100px; left: 20px; right: 90px; max-width: 400px;
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); padding: 12px;
+            border-radius: 20px; box-shadow: var(--shadow-float); display: flex; align-items: center; gap: 14px;
+            transform: translateY(200%); transition: 0.5s var(--ease-elastic); border: 1px solid rgba(255,255,255,0.5);
+        }
+        .map-banner.active { transform: translateY(0); }
+
+        /* MARKERS */
+        .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px !important; height: 44px !important; margin-left: -22px !important; margin-top: -22px !important; transition: transform 0.3s var(--ease-elastic); }
+        .custom-pin:hover { transform: scale(1.3); z-index: 5000 !important; }
         
         .pin-bubble {
-            width: 100%; height: 100%; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 13px; color: white;
-            border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 14px; color: white; border: 3px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.25);
         }
-        .pin-bubble.high { background: var(--c-high); }
-        .pin-bubble.med { background: var(--c-med); }
-        .pin-bubble.low { background: var(--c-low); }
-        .pin-bubble.unsaved { background: var(--c-new); color: white; }
-
-        /* USER LOCATION (VAN) MARKER */
-        .user-pin {
-            display: flex; align-items: center; justify-content: center;
-            width: 44px !important; height: 44px !important;
-            margin-left: -22px !important; margin-top: -22px !important;
-            background: var(--accent); border: 3px solid white; border-radius: 50%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); color: white; font-size: 18px;
-            animation: pulse 2s infinite;
+        .mk-high { background: var(--c-good); }
+        .mk-med { background: var(--c-avg); }
+        .mk-low { background: var(--c-bad); }
+        
+        /* THE BLUE PULSE ICON */
+        .mk-scan { 
+            background: var(--scan-blue); color: white; font-size: 16px;
+            animation: pulseBlue 2s infinite; 
         }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(15, 23, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); } }
 
-        /* BANNER */
-        .banner {
-            position: absolute; bottom: 100px; left: 16px; right: 16px;
-            background: white; border-radius: var(--radius-xl); padding: 16px;
-            box-shadow: var(--shadow-hard); pointer-events: auto;
-            display: flex; align-items: center; gap: 14px;
-            transform: translateY(150%); transition: transform 0.3s;
+        /* --- CARNET VIEW (Onglet 2) --- */
+        #view-list { background: #f8fafc; flex-direction: column; }
+        .list-head-area { padding: 24px; background: white; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 20; }
+        .list-title { font-family: var(--font-display); font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--dark); }
+        
+        .stats-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .stat-badge { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #64748b; }
+        
+        .filter-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .f-chip {
+            padding: 8px 18px; border-radius: 30px; background: white; border: 1px solid #e2e8f0;
+            font-weight: 600; font-size: 13px; color: #64748b; cursor: pointer; transition: 0.2s; white-space: nowrap;
         }
-        .banner.active { transform: translateY(0); }
-        .ban-img-wrap { width: 64px; height: 64px; border-radius: 16px; overflow: hidden; background: #eee; flex-shrink: 0; }
-        .ban-img { width: 100%; height: 100%; object-fit: cover; }
-        .ban-content { flex: 1; overflow: hidden; }
-        .ban-title { font-weight: 800; font-size: 16px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ban-subtitle { font-size: 13px; color: #666; margin-bottom: 4px; }
-        .ban-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+        .f-chip.active { background: var(--dark); color: white; border-color: var(--dark); transform: scale(1.05); }
 
-        /* MODAL */
+        .carnet-grid { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-content: start; }
+
+        /* --- MODAL EDIT (VIBRANT) --- */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 5000;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            display: flex; align-items: flex-end; backdrop-filter: blur(4px);
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+            display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(8px);
         }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         .sheet {
-            width: 100%; max-width: 600px; margin: 0 auto; background: white;
-            border-radius: 28px 28px 0 0; overflow: hidden; max-height: 90vh;
-            transform: translateY(100%); transition: transform 0.3s ease;
-            display: flex; flex-direction: column;
+            width: 100%; max-width: 550px; background: #fff;
+            border-radius: 32px 32px 0 0; max-height: 92vh; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.4s var(--ease-elastic);
         }
         .modal-overlay.open .sheet { transform: translateY(0); }
+
+        /* Header Coloré */
+        .sheet-hero {
+            padding: 30px 24px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 32px 32px 0 0; display: flex; justify-content: space-between; align-items: center;
+        }
+        .score-big { font-family: var(--font-display); font-size: 48px; font-weight: 900; color: var(--dark); line-height: 1; }
+        .score-label { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-top: 5px; }
+
         .sheet-body { padding: 24px; overflow-y: auto; }
 
-        /* INPUTS */
-        .modern-input {
-            width: 100%; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 12px; font-family: var(--font-body); font-weight: 500; font-size: 15px; margin-bottom: 12px;
+        .form-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+        .form-input {
+            width: 100%; padding: 16px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px;
+            font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--dark); outline: none; margin-bottom: 20px; transition: 0.2s;
         }
-        .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
-        .slider-row span { width: 70px; font-size: 13px; font-weight: 700; color: #475569; }
-        input[type=range] { flex: 1; -webkit-appearance: none; height: 10px; border-radius: 5px; background: #e2e8f0; outline: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); border: 2px solid white; cursor: pointer; }
+        .form-input:focus { border-color: var(--primary); background: white; }
 
-        /* CREATION */
-        .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:500; display:none; pointer-events:none; }
-        .target-center.visible { display:block; }
-        .pin-target { width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3); }
-        .creation-ui { position:absolute; bottom:110px; left:0; right:0; text-align:center; display:none; pointer-events:auto; }
-        .creation-ui.visible { display:block; }
-        .btn-confirm { background:var(--primary); color:white; padding:12px 24px; border-radius:30px; border:none; font-weight:700; box-shadow:var(--shadow-hard); cursor: pointer; }
+        /* COLORFUL SLIDERS */
+        .slider-box { margin-bottom: 24px; }
+        .slider-label-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
+        
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; height: 12px; border-radius: 10px; background: #e2e8f0; outline: none; margin: 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; 
+            background: white; border: 4px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: grab; transition: 0.1s;
+        }
+        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
 
-        /* LIST VIEW */
-        .list-view {
-            position: fixed; inset: 0; background: #f8fafc; z-index: 2000;
-            transform: translateX(100%); transition: transform 0.3s;
-            display: flex; flex-direction: column;
-        }
-        .list-view.open { transform: translateX(0); }
-        .list-head { padding: 50px 20px 20px; background: white; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
-        .list-body { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
-        .list-card {
-            background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px;
-            display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border: 1px solid #f1f5f9; cursor: pointer;
-        }
+        /* Dynamic colors for sliders via JS */
+        
+        .btn-action { width: 100%; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; border: none; transition: 0.2s; margin-top: 10px; }
+        .btn-save { background: var(--dark); color: white; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3); }
+        .btn-save:active { transform: scale(0.98); }
+        .btn-del { background: transparent; color: var(--c-bad); margin-top: 0; }
 
-        /* NAV */
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom);
-            height: 80px; display: flex; justify-content: space-around; align-items: center; z-index: 3000;
+        /* BOTTOM NAV */
+        .bottom-nav {
+            height: 80px; background: white; border-top: 1px solid #e2e8f0;
+            display: flex; justify-content: space-around; align-items: center; z-index: 5000; padding-bottom: env(safe-area-inset-bottom);
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; cursor: pointer; width: 80px; transition: 0.2s; }
+        .nav-item i { font-size: 24px; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 22px; }
+        .nav-item.active i { transform: translateY(-4px) scale(1.1); }
 
-        .toast { position: fixed; top: 120px; left: 50%; transform: translate(-50%, -20px); background: #333; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 6000; }
-        .toast.visible { opacity: 1; transform: translate(-50%, 0); }
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        /* Toast */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--dark); color: white; padding: 12px 24px; border-radius: 40px; font-weight: 700; opacity: 0; z-index: 10000; transition: 0.4s var(--ease-elastic); }
+        .toast.visible { transform: translateX(-50%) translateY(20px); opacity: 1; }
+
+        /* Creation & Van */
+        .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index: 500; display:none; pointer-events:none; }
+        .target-center.visible { display:block; animation: popIn 0.3s; }
+        .pin-target { width:48px; height:48px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-48px; box-shadow:0 20px 40px rgba(225,29,72,0.4); }
+        .creation-ui { position:absolute; bottom:30px; left:0; right:0; text-align:center; display:none; pointer-events:auto; z-index: 2000; }
+        .creation-ui.visible { display:block; animation: slideInUp 0.3s; }
+
+        .user-pin { display: flex; align-items: center; justify-content: center; width: 50px !important; height: 50px !important; margin-left: -25px !important; margin-top: -25px !important; background: var(--dark); border: 3px solid white; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: white; font-size: 22px; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
-
-    <div class="ui-layer">
-        <!-- HEADER -->
-        <div class="header-wrap">
-            <div class="top-row">
-                <div class="app-title"><i class="fa-solid fa-star"></i> Guide SIL</div>
-                <button class="btn-icon" id="drive-btn" onclick="Drive.handleAuth()">
-                    <i class="fa-brands fa-google-drive"></i>
-                </button>
-            </div>
-            <!-- RECHERCHE & FILTRE -->
-            <div class="search-bar">
-                <div class="search-input-group">
-                    <i class="fa-solid fa-map-pin" style="color:#999; margin-right:8px"></i>
-                    <input type="text" id="inp-city" placeholder="Aller à une ville...">
+    <!-- VIEW 1: MAP SPLIT -->
+    <div class="app-view active" id="view-map">
+        <div class="sidebar">
+            <div class="sb-header">
+                <div class="brand-row">
+                    <div class="brand"><i class="fa-solid fa-earth-americas" style="color:var(--primary)"></i> Exploration</div>
+                    <button class="btn-drive" id="drive-btn" onclick="Drive.handleAuth()"><i class="fa-brands fa-google-drive"></i></button>
                 </div>
-                <div style="width:1px; background:#ddd; margin:6px 0"></div>
-                <div class="search-input-group">
-                    <i class="fa-solid fa-filter" style="color:#999; margin-right:8px"></i>
-                    <input type="text" id="inp-filter" placeholder="Filtrer nom..." oninput="App.applyFilters()">
-                </div>
-            </div>
-            <!-- LOADER -->
-            <div class="loader-pill" id="loader">
-                <i class="fa-solid fa-circle-notch spin"></i> Recherche des restaurants...
-            </div>
-        </div>
-
-        <!-- FABs -->
-        <div class="fabs" id="main-ctrls">
-            <button class="fab-btn fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
-            <button class="fab-btn" id="btn-loc" onclick="App.toggleLocate()"><i class="fa-solid fa-location-arrow"></i></button>
-        </div>
-
-        <!-- BANNER -->
-        <div class="banner" id="banner">
-            <div class="ban-img-wrap"><img src="" class="ban-img" id="ban-img"></div>
-            <div class="ban-content">
-                <div class="ban-title" id="ban-title">...</div>
-                <div class="ban-subtitle" id="ban-sub">...</div>
-                <div class="ban-badge" id="ban-badge"></div>
-            </div>
-            <button class="btn-icon" style="width:36px; height:36px" onclick="App.openModal()"><i class="fa-solid fa-pen"></i></button>
-        </div>
-
-        <!-- CREATION -->
-        <div class="target-center" id="target-marker"><div class="pin-target"></div></div>
-        <div class="creation-ui" id="creation-ui">
-            <button class="btn-confirm" onclick="App.confirmCreation()">VALIDER ICI</button>
-            <div style="margin-top:10px"><button class="btn-icon" style="margin:0 auto; width:36px; height:36px" onclick="App.cancelCreation()"><i class="fa-solid fa-xmark"></i></button></div>
-        </div>
-    </div>
-
-    <!-- LISTE -->
-    <div class="list-view" id="list-view">
-        <div class="list-head">
-            <h2 style="margin:0; font-family:var(--font-display)">Mon Carnet</h2>
-            <i class="fa-solid fa-xmark" style="font-size:24px; cursor:pointer" onclick="App.nav('map')"></i>
-        </div>
-        <div class="list-body" id="list-body"></div>
-    </div>
-
-    <!-- MODAL -->
-    <div class="modal-overlay" id="modal">
-        <div class="sheet">
-            <div style="padding:20px; display:flex; justify-content:space-between; border-bottom:1px solid #eee">
-                <h3 style="margin:0">Édition</h3>
-                <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer" onclick="App.closeModal()"></i>
-            </div>
-            <div class="sheet-body">
-                <div onclick="document.getElementById('file').click()" style="text-align:center; margin-bottom:20px; cursor:pointer">
-                    <img id="prev-img" style="width:100%; height:160px; object-fit:cover; border-radius:12px; background:#f1f5f9; display:none">
-                    <div id="lbl-img" style="padding:30px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; color:#94a3b8">
-                        <i class="fa-solid fa-camera" style="font-size:24px"></i><br>PHOTO
+                <div class="search-group">
+                    <div class="s-input">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="inp-filter" placeholder="Chercher un lieu, un plat..." oninput="App.refreshUI()">
+                    </div>
+                    <div class="s-input">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <input type="text" id="inp-city" placeholder="Aller à une ville...">
                     </div>
                 </div>
-                <input type="file" id="file" hidden accept="image/*" onchange="App.handleImage(this)">
-
-                <input type="text" class="modern-input" id="e-name" placeholder="Nom">
-                <input type="text" class="modern-input" id="e-addr" placeholder="Adresse">
-
-                <div style="display:flex; justify-content:space-between; margin:10px 0">
-                    <span style="font-weight:700; font-size:12px; color:#999">NOTE</span>
-                    <span id="score-display" style="font-weight:800; color:var(--primary)">0.0</span>
-                </div>
+            </div>
+            <div class="sb-list-content" id="sidebar-list"></div>
+        </div>
+        
+        <div class="map-wrapper">
+            <div id="map"></div>
+            <div class="map-ui">
+                <div class="loader-wrap" id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i> Scan des environs...</div>
                 
-                <div class="slider-row"><span>Goût</span><input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()"></div>
-                <div class="slider-row"><span>Service</span><input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()"></div>
-                <div class="slider-row"><span>Cadre</span><input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()"></div>
-
-                <div style="display:flex; gap:10px; margin-top:15px">
-                    <input type="number" class="modern-input" id="p-min" placeholder="Min €">
-                    <input type="number" class="modern-input" id="p-max" placeholder="Max €">
+                <div class="fabs pointer-auto" id="main-ctrls">
+                    <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
+                    <button class="fab" id="btn-loc" onclick="App.toggleLocate()"><i class="fa-solid fa-location-crosshairs"></i></button>
                 </div>
 
-                <button class="btn-confirm" style="width:100%; margin-top:10px" onclick="App.save()">ENREGISTRER</button>
-                <button style="width:100%; background:transparent; border:none; color:var(--c-low); font-weight:600; padding:10px; margin-top:5px" onclick="App.remove()">Supprimer</button>
+                <div class="map-banner pointer-auto" id="banner">
+                    <img src="" style="width:56px; height:56px; border-radius:14px; object-fit:cover; background:#eee" id="ban-img">
+                    <div style="flex:1; overflow:hidden">
+                        <div style="font-weight:800; font-size:16px; margin-bottom:4px" id="ban-title">...</div>
+                        <div style="font-size:13px; color:#64748b" id="ban-sub">...</div>
+                    </div>
+                    <button onclick="App.openModal()" style="width:40px; height:40px; border-radius:12px; background:#f1f5f9; border:none; cursor:pointer"><i class="fa-solid fa-pen-to-square"></i></button>
+                </div>
+
+                <div class="target-center" id="target-marker"><div class="pin-target"></div></div>
+                <div class="creation-ui" id="creation-ui">
+                    <button class="btn-save" style="width:auto; padding:14px 40px" onclick="App.confirmCreation()">VALIDER</button>
+                    <div style="margin-top:12px"><button onclick="App.cancelCreation()" style="background:white; border:none; padding:10px 20px; border-radius:20px; font-weight:700; color:#64748b; box-shadow:0 4px 10px rgba(0,0,0,0.1)">Annuler</button></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast">Msg</div>
+    <!-- VIEW 2: CARNET -->
+    <div class="app-view" id="view-list">
+        <div class="list-head-area">
+            <div class="list-title">Mon Carnet</div>
+            <div class="stats-row" id="stats-row">
+                <div class="stat-badge">0 Lieux</div>
+                <div class="stat-badge">0.0 Moyenne</div>
+            </div>
+            
+            <div class="s-input" style="margin-bottom:15px; background:white">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="global-search" placeholder="Rechercher dans tout le carnet..." oninput="App.renderGlobalList()">
+            </div>
 
-    <!-- NAV -->
-    <div class="nav-bar">
-        <div class="nav-item active" id="nav-map" onclick="App.nav('map')"><i class="fa-solid fa-map"></i><span>Carte</span></div>
-        <div class="nav-item" id="nav-list" onclick="App.nav('list')"><i class="fa-solid fa-book-open"></i><span>Carnet</span></div>
+            <div class="filter-row">
+                <div class="f-chip active" onclick="App.setSort('score', this)">Par Note</div>
+                <div class="f-chip" onclick="App.setSort('name', this)">Par Nom</div>
+                <div class="f-chip" onclick="App.setSort('date', this)">Récents</div>
+            </div>
+        </div>
+        <div class="carnet-grid" id="global-list"></div>
     </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="nav-map" onclick="App.switchTab('map')">
+            <i class="fa-solid fa-map-location-dot"></i><span>Carte</span>
+        </div>
+        <div class="nav-item" id="nav-list" onclick="App.switchTab('list')">
+            <i class="fa-solid fa-book-open"></i><span>Carnet</span>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT VIBRANT -->
+    <div class="modal-overlay" id="modal">
+        <div class="sheet">
+            <div class="sheet-hero">
+                <div>
+                    <div class="score-big" id="count-score">0.0</div>
+                    <div class="score-label">Note Globale</div>
+                </div>
+                <button style="background:#fff; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; color:#94a3b8; font-size:18px" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="sheet-body">
+                <label class="form-label">Détails</label>
+                <input type="text" class="form-input" id="e-name" placeholder="Nom du lieu">
+                <input type="text" class="form-input" id="e-addr" placeholder="Adresse détectée">
+
+                <label class="form-label" style="margin-top:10px">Évaluation</label>
+                
+                <!-- Vivid Sliders -->
+                <div class="slider-box">
+                    <div class="slider-label-row">
+                        <span style="color:#f43f5e">Goût</span>
+                        <span id="val-taste">5.0</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()" style="accent-color:#f43f5e">
+                </div>
+
+                <div class="slider-box">
+                    <div class="slider-label-row">
+                        <span style="color:#f59e0b">Service</span>
+                        <span id="val-qp">5.0</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()" style="accent-color:#f59e0b">
+                </div>
+
+                <div class="slider-box">
+                    <div class="slider-label-row">
+                        <span style="color:#8b5cf6">Cadre</span>
+                        <span id="val-vibe">5.0</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()" style="accent-color:#8b5cf6">
+                </div>
+
+                <label class="form-label" style="margin-top:10px">Budget</label>
+                <div style="display:flex; gap:15px">
+                    <input type="number" class="form-input" id="p-min" placeholder="Min €">
+                    <input type="number" class="form-input" id="p-max" placeholder="Max €">
+                </div>
+
+                <button class="btn-action btn-save" onclick="App.save()">SAUVEGARDER</button>
+                <button class="btn-action btn-del" onclick="App.remove()">Supprimer ce lieu</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Notification</div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -342,7 +418,7 @@
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-            const FILE_NAME = "guide_michelin_sil_db.json";
+            const FILE_NAME = "guide_sil_v36.json";
             let tokenClient, token, fileId;
 
             const init = () => {
@@ -351,22 +427,16 @@
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID, scope: SCOPES, prompt: 'select_account',
                         callback: async (resp) => {
-                            if(resp.error) { App.toast("Erreur Auth"); return; }
+                            if(resp.error) return App.toast("Erreur Auth");
                             token = resp.access_token;
                             document.getElementById('drive-btn').classList.add('connected');
-                            App.toast("Connecté ! Sync...");
+                            App.toast("Synchronisé avec Drive");
                             await sync();
                         }
                     });
-                } catch(e) {}
+                } catch(e){}
             };
-
-            const handleAuth = () => {
-                if(token) {
-                    if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-icon'; }
-                } else if(tokenClient) { tokenClient.requestAccessToken(); }
-            };
-
+            const handleAuth = () => { if(token) { if(confirm("Déconnexion ?")){token=null; document.getElementById('drive-btn').classList.remove('connected');} } else if(tokenClient) tokenClient.requestAccessToken(); };
             const getFileId = async () => {
                 const q = `name='${FILE_NAME}' and trashed=false`;
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -379,7 +449,6 @@
                 const cr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
                 return (await cr.json()).id;
             };
-
             const sync = async () => {
                 if(!token) return;
                 document.getElementById('drive-btn').classList.add('syncing');
@@ -391,34 +460,34 @@
                     let changed = false;
                     driveData.forEach(d => { if(!localData.find(l=>l.id===d.id)) { localData.push(d); changed = true; } });
                     if(changed) { await App.saveAll(localData); App.refresh(); }
-                } catch(e) {}
+                } catch(e){}
                 document.getElementById('drive-btn').classList.remove('syncing');
             };
-
             const save = async (data) => {
                 if(!token) return;
                 document.getElementById('drive-btn').classList.add('syncing');
                 try {
                     if(!fileId) fileId = await getFileId();
                     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                } catch(e) {}
+                } catch(e){}
                 document.getElementById('drive-btn').classList.remove('syncing');
             };
-
             return { init, handleAuth, save, sync };
         })();
 
-        // --- APP ENGINE ---
+        // --- APP LOGIC ---
         const App = (() => {
             let map, db;
             let markers = [];
-            let allPlaces = [], savedPlaces = [];
+            let savedPlaces = [];
+            let scannedCache = [];
             let selectedPlace = null;
-            let currentImg = null;
             let isCreating = false;
             let isLocating = false;
             let userMarker = null;
-            
+            let sortMode = 'score';
+            let countUpInterval;
+
             const DEF_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80";
 
             const init = async () => {
@@ -427,13 +496,17 @@
                     await initDB();
                     await loadSaved();
                     updateMap();
+                    renderGlobalList();
                     document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
                     Drive.init();
-                } catch(e) { console.error(e); }
+                    if(navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(p => { map.setView([p.coords.latitude, p.coords.longitude], 15); }, () => {}); 
+                    }
+                } catch(e){ console.error(e); }
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V29', 1);
+                const req = indexedDB.open('GuideSil_V36', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
@@ -448,229 +521,228 @@
                 tx.oncomplete = () => { savedPlaces = data; r(); };
             });
 
-            // MAP & SCANNER
+            // --- NAVIGATION ---
+            const switchTab = (tab) => {
+                document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                if(tab === 'map') {
+                    document.getElementById('view-map').classList.add('active');
+                    document.getElementById('nav-map').classList.add('active');
+                    setTimeout(() => map.invalidateSize(), 100);
+                } else {
+                    document.getElementById('view-list').classList.add('active');
+                    document.getElementById('nav-list').classList.add('active');
+                    renderGlobalList();
+                }
+            };
+
+            // --- MAP ---
             const initMap = () => {
-                map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
+                map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 15);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
-                
-                // Scan on move (if not creating)
-                map.on('moveend', () => { 
-                    if(isLocating) return; // Don't scan randomly if tracking user
-                    if(!isCreating && map.getZoom() > 13) scan(); 
-                });
-                
-                // Stop location tracking if user drags
-                map.on('dragstart', () => {
-                    if(isLocating) { isLocating = false; document.getElementById('btn-loc').classList.remove('active-loc'); }
-                });
-                
+                map.on('moveend', () => { if(!isLocating && !isCreating && map.getZoom() > 13) scan(); });
+                map.on('dragstart', () => { if(isLocating) { isLocating=false; document.getElementById('btn-loc').classList.remove('active-loc'); } });
                 setTimeout(scan, 1000);
             };
 
-            const scan = async (centerOverride) => {
-                // Buffer 50% around screen (0.5 padding)
-                const b = map.getBounds().pad(0.5); 
+            const getIcon = (t) => {
+                if(t && (t.includes('bar') || t.includes('pub'))) return 'fa-martini-glass-citrus';
+                if(t && t.includes('cafe')) return 'fa-mug-hot';
+                return 'fa-utensils';
+            }
+
+            const scan = async () => {
+                const b = map.getBounds().pad(0.5);
                 const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
-                
-                const loader = document.getElementById('loader');
-                loader.classList.add('visible');
-                
+                document.getElementById('loader').classList.add('visible');
                 try {
                     const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
                     const d = await r.json();
-                    const newP = d.elements.map(e => ({
+                    const newItems = d.elements.map(e => ({
                         id: e.id, name: e.tags.name || "Inconnu",
                         addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
-                        lat: e.lat, lon: e.lon
+                        type: e.tags.amenity || 'restaurant', lat: e.lat, lon: e.lon
                     }));
-                    
-                    allPlaces = [...savedPlaces];
-                    newP.forEach(n => { if(!savedPlaces.find(s=>s.id===n.id)) allPlaces.push(n); });
-                    updateMap();
+                    let changed = false;
+                    newItems.forEach(item => {
+                        if (!savedPlaces.some(s => s.id === item.id) && !scannedCache.some(c => c.id === item.id)) {
+                            scannedCache.push(item); changed = true;
+                        }
+                    });
+                    if(scannedCache.length > 200) scannedCache = scannedCache.slice(scannedCache.length - 200);
+                    if(changed) updateMap();
                 } catch(e){}
-                
-                loader.classList.remove('visible');
+                document.getElementById('loader').classList.remove('visible');
             };
 
             const updateMap = () => {
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
-                applyFilters();
-            };
-
-            const applyFilters = () => {
+                const bounds = map.getBounds();
                 const term = document.getElementById('inp-filter').value.toLowerCase();
-                markers.forEach(m => map.removeLayer(m.marker));
-                markers = [];
+                const visibleInList = savedPlaces.filter(p => bounds.contains([p.lat, p.lon]) && (!term || p.name.toLowerCase().includes(term)));
+                renderSidebarList(visibleInList);
 
+                const allPlaces = [...savedPlaces, ...scannedCache];
                 allPlaces.forEach(p => {
                     const isSaved = savedPlaces.find(s=>s.id===p.id);
                     const match = !term || (p.name && p.name.toLowerCase().includes(term));
                     
                     let html;
                     if(isSaved) {
-                        const score = p.score?.total || 0;
-                        let bubble = 'med';
-                        if(score >= 8) bubble = 'high';
-                        if(score < 5) bubble = 'low';
-                        html = `<div class="pin-bubble ${bubble}">${score}</div>`;
+                        const s = p.score?.total || 0;
+                        let cls = s>=8?'mk-high':(s>=5?'mk-med':'mk-low');
+                        html = `<div class="pin-bubble ${cls}">${s}</div>`;
                     } else {
-                        html = `<div class="pin-bubble unsaved"><i class="fa-solid fa-utensils"></i></div>`;
+                        const icon = getIcon(p.type);
+                        // THE REQUESTED BLUE ICON
+                        html = `<div class="pin-bubble mk-scan"><i class="fa-solid ${icon}"></i></div>`;
                     }
                     
-                    let opacity = match ? 1 : 0.2; 
+                    let op = match ? 1 : 0.2;
                     if(match || isSaved) {
-                        const m = L.marker([p.lat, p.lon], {
-                            icon: L.divIcon({className: 'custom-pin', html: html}),
-                            opacity: opacity,
-                            zIndexOffset: isSaved ? 1000 : 0
-                        }).addTo(map);
-                        m.on('click', () => { if(match) select(p, isSaved); });
+                        const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:'custom-pin', html:html}), opacity:op, zIndexOffset: isSaved?1000:0}).addTo(map);
+                        m.on('click', ()=>select(p, isSaved));
                         markers.push({marker:m});
                     }
                 });
             };
 
+            const renderSidebarList = (listData) => {
+                const container = document.getElementById('sidebar-list');
+                listData.sort((a,b) => (b.score?.total || 0) - (a.score?.total || 0));
+                
+                if(!listData.length) { container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8"><i class="fa-solid fa-ghost" style="font-size:24px; margin-bottom:10px"></i><br>Zone vide</div>`; return; }
+
+                container.innerHTML = listData.map((p, i) => {
+                    const s = p.score?.total || 0;
+                    let clsTag = s>=8?'sc-high':(s>=5?'sc-med':'sc-low');
+                    // STAGGERED ANIMATION
+                    return `
+                    <div class="place-card" style="animation-delay:${i*50}ms" onclick="App.flyToPlace(${p.id})">
+                        <img src="${p.img || DEF_IMG}" class="pc-img">
+                        <div class="pc-info">
+                            <div class="pc-title">${p.name}</div>
+                            <div class="pc-addr">${p.addr.substring(0,35)}...</div>
+                            <div class="pc-score ${clsTag}"><i class="fa-solid fa-star" style="font-size:10px"></i> ${s}</div>
+                        </div>
+                    </div>`
+                }).join('');
+            };
+
+            // --- CARNET GRID ---
+            const setSort = (m, el) => { sortMode = m; document.querySelectorAll('.f-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderGlobalList(); };
+
+            const renderGlobalList = () => {
+                const container = document.getElementById('global-list');
+                const term = document.getElementById('global-search').value.toLowerCase();
+                let data = savedPlaces.filter(p => !term || (p.name && p.name.toLowerCase().includes(term)) || (p.addr && p.addr.toLowerCase().includes(term)));
+                
+                // Stats
+                const avg = data.length ? (data.reduce((acc, c) => acc + (parseFloat(c.score?.total)||0), 0) / data.length).toFixed(1) : 0;
+                document.getElementById('stats-row').innerHTML = `<div class="stat-badge">${data.length} Lieux</div><div class="stat-badge">${avg} Moyenne</div>`;
+
+                data.sort((a,b) => {
+                    if(sortMode === 'score') return (b.score?.total || 0) - (a.score?.total || 0);
+                    if(sortMode === 'name') return a.name.localeCompare(b.name);
+                    if(sortMode === 'date') return b.id - a.id;
+                });
+
+                if(!data.length) { container.innerHTML = '<div style="text-align:center; padding:60px; color:#999; grid-column:1/-1">Carnet vide</div>'; return; }
+                
+                container.innerHTML = data.map((p, i) => {
+                    const s = p.score?.total || 0;
+                    let clsTag = s>=8?'sc-high':(s>=5?'sc-med':'sc-low');
+                    return `
+                    <div class="place-card" style="animation-delay:${i*40}ms" onclick="App.flyToPlace(${p.id})">
+                        <img src="${p.img || DEF_IMG}" class="pc-img">
+                        <div class="pc-info">
+                            <div class="pc-title">${p.name}</div>
+                            <div class="pc-addr">${p.addr}</div>
+                            <div class="pc-score ${clsTag}">${s} / 10</div>
+                        </div>
+                    </div>`
+                }).join('');
+            };
+
             const select = (p, saved) => {
                 selectedPlace = saved || p;
-                map.flyTo([p.lat - 0.002, p.lon], 16);
-                
+                map.flyTo([p.lat-0.002, p.lon], 16);
                 document.getElementById('ban-title').innerText = p.name || "Inconnu";
                 document.getElementById('ban-sub').innerText = p.addr || "Lieu détecté";
-                
-                const badge = document.getElementById('ban-badge');
-                if(selectedPlace.score?.total) {
-                    const s = selectedPlace.score.total;
-                    badge.innerText = `Note: ${s}/10`;
-                    badge.style.color = s>=8 ? 'var(--c-high)' : (s>=5 ? 'var(--c-med)' : 'var(--c-low)');
-                    badge.style.background = "#eee";
-                } else {
-                    badge.innerText = "Non enregistré";
-                    badge.style.color = "#fff";
-                    badge.style.background = "var(--c-new)";
-                }
-                
                 document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
                 document.getElementById('banner').classList.add('active');
             };
 
-            // GEOLOCATION (VAN)
-            const toggleLocate = () => {
-                if(isLocating) {
-                    // Turn off
-                    isLocating = false;
-                    document.getElementById('btn-loc').classList.remove('active-loc');
-                } else {
-                    // Turn on
-                    isLocating = true;
-                    document.getElementById('btn-loc').classList.add('active-loc');
-                    
-                    navigator.geolocation.getCurrentPosition(p => {
-                        const lat = p.coords.latitude;
-                        const lon = p.coords.longitude;
-                        
-                        // Center Map
-                        map.setView([lat, lon], 16);
-                        
-                        // User Marker (Van)
-                        if(userMarker) map.removeLayer(userMarker);
-                        const vanHtml = `<div class="user-pin"><i class="fa-solid fa-truck-fast"></i></div>`;
-                        userMarker = L.marker([lat, lon], {
-                            icon: L.divIcon({ className: 'van-wrap', html: vanHtml, iconSize:[40,40] }),
-                            zIndexOffset: 2000
-                        }).addTo(map);
-
-                        // Immediate Scan
-                        scan();
-                        
-                    }, err => { alert("Position impossible"); isLocating = false; });
-                }
+            const flyToPlace = (id) => {
+                const p = savedPlaces.find(x => x.id === id);
+                if(p) { switchTab('map'); setTimeout(() => select(p, p), 300); }
             };
 
-            // ACTIONS
-            const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').classList.add('visible'); document.getElementById('creation-ui').classList.add('visible'); };
-            const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').classList.remove('visible'); document.getElementById('creation-ui').classList.remove('visible'); };
-            const confirmCreation = () => {
-                const c = map.getCenter();
-                const newP = { id:Date.now(), name:"", addr:"Position", lat:c.lat, lon:c.lng, score:{qp:5, taste:5, vibe:5, total:5}, img:null, price:{min:'', max:''} };
-                cancelCreation(); savedPlaces.push(newP); select(newP, newP); openModal();
-            };
-
+            // --- EDITING LOGIC (DYNAMIC SLIDERS) ---
             const openModal = () => {
                 const p = selectedPlace;
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-addr').value = p.addr||"";
                 const s = p.score || {qp:5, taste:5, vibe:5};
-                document.getElementById('r-taste').value = s.taste; document.getElementById('r-qp').value = s.qp; document.getElementById('r-vibe').value = s.vibe;
+                document.getElementById('r-taste').value=s.taste; 
+                document.getElementById('r-qp').value=s.qp; 
+                document.getElementById('r-vibe').value=s.vibe;
                 document.getElementById('p-min').value = p.price?.min||""; document.getElementById('p-max').value = p.price?.max||"";
                 
-                currentImg = p.img;
-                if(currentImg) { document.getElementById('prev-img').src=currentImg; document.getElementById('prev-img').style.display='block'; document.getElementById('lbl-img').style.display='none'; }
-                else { document.getElementById('prev-img').style.display='none'; document.getElementById('lbl-img').style.display='block'; }
+                calc();
+                document.getElementById('modal').classList.add('open');
                 
-                calc(); document.getElementById('modal').classList.add('open');
+                // Count Up Animation
+                let start = 0; const end = parseFloat(s.total||0);
+                clearInterval(countUpInterval);
+                countUpInterval = setInterval(() => {
+                    start += 0.2;
+                    if(start >= end) { start = end; clearInterval(countUpInterval); }
+                    document.getElementById('count-score').innerText = start.toFixed(1);
+                }, 20);
             };
             const closeModal = () => document.getElementById('modal').classList.remove('open');
             
             const calc = () => {
                 const t=parseFloat(document.getElementById('r-taste').value), q=parseFloat(document.getElementById('r-qp').value), v=parseFloat(document.getElementById('r-vibe').value);
-                const tot=((t+q+v)/3).toFixed(1); document.getElementById('score-display').innerText=tot;
+                const tot=((t+q+v)/3).toFixed(1); 
+                
+                document.getElementById('val-taste').innerText = t;
+                document.getElementById('val-qp').innerText = q;
+                document.getElementById('val-vibe').innerText = v;
+                document.getElementById('count-score').innerText = tot;
+                
                 return {taste:t, qp:q, vibe:v, total:tot};
             };
             
-            const handleImage = (i) => { if(i.files[0]){ const r=new FileReader(); r.onload=e=>{ currentImg=e.target.result; document.getElementById('prev-img').src=currentImg; document.getElementById('prev-img').style.display='block'; document.getElementById('lbl-img').style.display='none'; }; r.readAsDataURL(i.files[0]); }};
-            
             const save = () => {
-                const u = { ...selectedPlace, name:document.getElementById('e-name').value, addr:document.getElementById('e-addr').value, score:calc(), price:{min:document.getElementById('p-min').value, max:document.getElementById('p-max').value}, img:currentImg };
+                const u = { ...selectedPlace, name:document.getElementById('e-name').value, addr:document.getElementById('e-addr').value, score:calc(), price:{min:document.getElementById('p-min').value, max:document.getElementById('p-max').value}, img:selectedPlace.img };
                 const idx = savedPlaces.findIndex(x=>x.id===u.id); if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
                 const tx = db.transaction('places', 'readwrite'); tx.objectStore('places').put(u);
-                closeModal(); updateMap(); select(u,u); Drive.save(savedPlaces); toast("Enregistré");
+                closeModal(); updateMap(); renderGlobalList(); select(u,u); Drive.save(savedPlaces); toast("Sauvegardé avec succès");
             };
-            
+
             const remove = () => {
-                if(!confirm("Supprimer ?")) return;
+                if(!confirm("Supprimer ce lieu ?")) return;
                 db.transaction('places', 'readwrite').objectStore('places').delete(selectedPlace.id);
                 savedPlaces = savedPlaces.filter(x=>x.id!==selectedPlace.id);
-                closeModal(); document.getElementById('banner').classList.remove('active'); updateMap(); Drive.save(savedPlaces); toast("Supprimé");
+                closeModal(); document.getElementById('banner').classList.remove('active'); updateMap(); renderGlobalList(); Drive.save(savedPlaces); toast("Lieu supprimé");
             };
 
-            const nav = (v) => {
-                document.getElementById('nav-map').classList.toggle('active', v==='map'); document.getElementById('nav-list').classList.toggle('active', v==='list');
-                const lv=document.getElementById('list-view'); if(v==='list'){ renderList(); lv.classList.add('open'); } else lv.classList.remove('open');
-            };
-
-            const renderList = () => {
-                const c=document.getElementById('list-body');
-                if(!savedPlaces.length) { c.innerHTML='<div style="text-align:center;color:#999;padding:40px">Vide</div>'; return; }
-                const grps={}; savedPlaces.forEach(p=>{
-                    let city="DIVERS"; if(p.addr){ const pt=p.addr.toUpperCase().split(' '); const i=pt.findIndex(x=>/^\d{5}$/.test(x)); if(i>-1 && pt[i+1]) city=pt[i+1]; }
-                    if(!grps[city]) grps[city]=[]; grps[city].push(p);
-                });
-                c.innerHTML=Object.keys(grps).sort().map(city=>`
-                    <div style="margin-bottom:20px"><div style="font-weight:700;color:var(--primary);margin-bottom:10px">${city}</div>
-                    ${grps[city].map(p=>`
-                        <div class="list-card" onclick="App.goto(${p.id})">
-                            <img src="${p.img||DEF_IMG}" style="width:60px;height:60px;object-fit:cover;border-radius:8px">
-                            <div style="flex:1">
-                                <div style="font-weight:700">${p.name}</div>
-                                <div style="font-size:12px;color:#666">${p.addr.substring(0,25)}...</div>
-                                <div style="font-size:11px;font-weight:700;color:var(--primary)">${p.score?.total||'-'}/10</div>
-                            </div>
-                        </div>`).join('')}
-                    </div>`).join('');
-            };
-            
-            const goto = (id) => { nav('map'); const p=savedPlaces.find(x=>x.id===id); if(p) setTimeout(()=>select(p,p),300); };
-            const searchCity = async (v) => { if(v.length<3)return; const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); const d=await r.json(); if(d.length) map.setView([d[0].lat, d[0].lon], 13); };
-            
+            // UTILS
+            const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').classList.add('visible'); document.getElementById('creation-ui').classList.add('visible'); };
+            const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').classList.remove('visible'); document.getElementById('creation-ui').classList.remove('visible'); };
+            const confirmCreation = () => { const c=map.getCenter(); const newP={ id:Date.now(), name:"", addr:"Position", type:'restaurant', lat:c.lat, lon:c.lng, score:{qp:5, taste:5, vibe:5, total:0}, price:{min:'', max:''} }; cancelCreation(); savedPlaces.push(newP); select(newP, newP); openModal(); };
+            const toggleLocate = () => { if(isLocating){ isLocating=false; document.getElementById('btn-loc').style.background='white'; document.getElementById('btn-loc').style.color='#334155'; } else { isLocating=true; document.getElementById('btn-loc').style.background=getComputedStyle(document.documentElement).getPropertyValue('--scan-blue'); document.getElementById('btn-loc').style.color='white'; navigator.geolocation.getCurrentPosition(p=>{ const lat=p.coords.latitude, lon=p.coords.longitude; map.setView([lat,lon], 16); if(userMarker)map.removeLayer(userMarker); const html=`<div class="user-pin"><i class="fa-solid fa-truck-fast"></i></div>`; userMarker=L.marker([lat,lon],{icon:L.divIcon({className:'van', html:html, iconSize:[50,50]}), zIndexOffset:2000}).addTo(map); scan(); }); } };
+            const searchCity = async (v) => { if(v.length<3)return; const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); const d=await r.json(); if(d.length){ map.setView([d[0].lat, d[0].lon], 14); scannedCache=[]; } };
+            const refreshUI = () => updateMap();
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2500); };
-            const refresh = () => { updateMap(); toast("Sync OK"); };
+            const refresh = () => { updateMap(); renderGlobalList(); toast("Synchronisation terminée"); };
 
-            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, toggleLocate, goto, toast };
+            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, toggleLocate, flyToPlace, toast, refreshUI };
         })();
 
-        window.Drive = Drive;
-        window.App = App;
         window.onload = App.init;
     </script>
 </body>
