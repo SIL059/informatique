@@ -309,7 +309,8 @@
     <script>
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
-            const CLIENT_ID = "731283926358-viam3ulpgna14flfdeb9m92l8s620hoi.apps.googleusercontent.com";
+            // VOTRE CLIENT ID
+            const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FILE_NAME = "guide_michelin_sil_db.json";
             
@@ -319,7 +320,10 @@
             const init = () => {
                 if(typeof google === 'undefined') return setTimeout(init, 500);
                 tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID, scope: SCOPES,
+                    client_id: CLIENT_ID, 
+                    scope: SCOPES,
+                    // Cette option force l'écran de sélection de compte
+                    prompt: 'select_account',
                     callback: async (resp) => {
                         if(resp.error) return App.toast("Erreur Auth Google");
                         token = resp.access_token;
@@ -334,7 +338,7 @@
                 if(token) {
                     if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-drive'; }
                 } else {
-                    if(tokenClient) tokenClient.requestAccessToken({prompt: 'consent'});
+                    if(tokenClient) tokenClient.requestAccessToken(); // 'prompt' est déjà défini dans initTokenClient
                     else App.toast("Google API non chargé");
                 }
             };
