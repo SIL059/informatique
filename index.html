@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,25 +7,23 @@
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Guide Michelin SIL - Premium</title>
+    <title>Guide Michelin SIL </title>
     
     <!-- 1. FONTS & ICONS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 2. LEAFLET + CLUSTER CSS -->
+    <!-- 2. LEAFLET CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
     <!-- 3. GOOGLE AUTH -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
-        /* --- DESIGN SYSTEM (Airbnb / Apple Maps vibe) --- */
+        /* --- DESIGN SYSTEM (LE NOUVEAU VISUEL) --- */
         :root {
-            --primary: #E11D48; /* Rouge moderne, moins agressif */
+            --primary: #E11D48;
             --accent: #0F172A;
             --success: #10B981;
             --warning: #F59E0B;
@@ -41,31 +40,17 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; width: 100%; height: 100dvh; font-family: var(--font-body); background: #f2f2f2; overflow: hidden; color: var(--accent); }
+        body { margin: 0; width: 100%; height: 100dvh; font-family: var(--font-body); background: #f2f2f2; overflow: hidden; color: var(--accent); position: fixed; }
 
         /* --- UTILS --- */
-        .glass {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-        }
         .flex-center { display: flex; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
 
         /* --- MAP LAYER --- */
         #map { position: absolute; inset: 0; z-index: 0; background: #e5e5e5; }
         
-        /* Marker Cluster Customization */
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-            background-color: rgba(225, 29, 72, 0.2);
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-            background-color: var(--primary);
-            color: white;
-            font-weight: 700;
-            font-family: var(--font-body);
-        }
+        /* Force clickability */
+        .leaflet-interactive { cursor: pointer !important; pointer-events: auto !important; }
 
         /* --- UI LAYER --- */
         .ui-layer {
@@ -165,7 +150,7 @@
             width: 40px; height: 40px; background: var(--primary);
             border: 4px solid white; border-radius: 50% 50% 0 50%;
             transform: rotate(45deg); box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            margin-top: -40px; /* Tip on center */
+            margin-top: -40px;
         }
 
         .creation-toolbar {
@@ -195,23 +180,10 @@
         }
         .list-title { font-family: var(--font-display); font-size: 28px; margin: 0 0 16px 0; }
         
-        /* CHIPS FILTERS */
-        .chips-scroll {
-            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;
-            scrollbar-width: none;
-        }
-        .chips-scroll::-webkit-scrollbar { display: none; }
-        .chip {
-            padding: 6px 14px; border-radius: 20px; background: #f1f5f9; color: #475569;
-            font-size: 13px; font-weight: 600; white-space: nowrap; transition: 0.2s; border: 1px solid transparent;
-        }
-        .chip.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(225,29,72,0.3); }
-
         .list-body { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
-        .list-group-title {
-            font-size: 12px; font-weight: 700; text-transform: uppercase; color: #94a3b8;
-            margin-bottom: 10px; letter-spacing: 0.5px; position: sticky; top: 0;
-        }
+        .city-group { margin-bottom: 20px; }
+        .city-title { position: sticky; top: 0; background: rgba(248,250,252,0.95); padding: 10px 0; font-weight: 700; color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; z-index: 10; }
+        
         .list-card {
             background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px;
             display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -249,7 +221,7 @@
         }
         .modern-input:focus { border-color: var(--primary); background: white; }
 
-        /* Range Sliders Custom */
+        /* Range Sliders */
         .sliders-grid { display: grid; gap: 12px; }
         .slider-row { display: flex; align-items: center; gap: 10px; }
         .slider-row span { width: 80px; font-size: 13px; font-weight: 600; color: #334155; }
@@ -276,27 +248,34 @@
         .nav-item i { font-size: 22px; }
         .nav-item span { font-size: 10px; font-weight: 700; }
 
-        /* CUSTOM MARKER CSS */
+        /* CUSTOM MARKER CSS (Adapté au nouveau design) */
         .custom-pin {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 34px !important; height: 34px !important; 
-            margin-left: -17px !important; margin-top: -17px !important; /* Centering */
+            margin-left: -17px !important; margin-top: -17px !important;
             transition: transform 0.2s;
         }
         .custom-pin:hover { transform: scale(1.1); z-index: 1000 !important; }
+        .custom-pin.dimmed { opacity: 0.6; filter: grayscale(1); }
         
-        /* Note bubble inside marker */
+        /* Bulle de marqueur */
         .pin-bubble {
             width: 32px; height: 32px; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center;
             font-weight: 800; font-size: 12px; color: white;
             border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            background: var(--accent); /* Default dark */
         }
-        .pin-bubble.high { background: var(--success); }
-        .pin-bubble.med { background: var(--warning); }
-        .pin-bubble.low { background: var(--danger); }
-        .pin-bubble.unsaved { background: white; color: #333; border: 2px solid #ccc; font-size: 0; } /* Empty bubble for unsaved */
-        .pin-bubble.unsaved::after { content:'\f2e7'; font-family:'Font Awesome 6 Free'; font-weight:900; font-size:14px; color:#ccc; }
+        
+        .pin-bubble.saved-high { background: var(--success); }
+        .pin-bubble.saved-med { background: var(--warning); }
+        .pin-bubble.saved-low { background: var(--danger); }
+        
+        /* Marqueur pour lieux "scannés" non sauvegardés (Gris) */
+        .pin-bubble.unsaved {
+            background: #cbd5e1;
+            color: white;
+        }
 
         /* Toast */
         .toast {
@@ -384,13 +363,6 @@
                 <h2 class="list-title">Mon Carnet</h2>
                 <i class="fa-solid fa-xmark" style="font-size:24px; color:#94a3b8; cursor:pointer" onclick="App.nav('map')"></i>
             </div>
-            <!-- CHIPS -->
-            <div class="chips-scroll" id="chips-container">
-                <div class="chip active" onclick="App.filterList('all', this)">Tout</div>
-                <div class="chip" onclick="App.filterList('top', this)">Top Chefs (>8)</div>
-                <div class="chip" onclick="App.filterList('cheap', this)">Budget €</div>
-                <div class="chip" onclick="App.filterList('photos', this)">Avec photos</div>
-            </div>
         </div>
         <div class="list-body" id="list-body">
             <!-- Items generated here -->
@@ -466,14 +438,13 @@
 
     <!-- SCRIPTS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     
     <script>
-        // --- GOOGLE DRIVE MODULE (PRESERVED) ---
+        // --- GOOGLE DRIVE MODULE (Identifiants restaurés) ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-            const FILE_NAME = "guide_michelin_sil_v3.json";
+            const FILE_NAME = "guide_michelin_sil_db.json";
             
             let tokenClient, token;
             let fileId = null;
@@ -538,33 +509,35 @@
             return { init, handleAuth, save, sync };
         })();
 
-        // --- APPLICATION LOGIC ---
+        // --- APP LOGIC (Restaurée) ---
         const App = (() => {
-            let map, db, clusterGroup;
+            let map, db;
+            let markers = [];
             let allPlaces = [], savedPlaces = [];
             let selectedPlace = null;
             let currentImg = null;
+            let isCreating = false;
             
             const DEF_IMG = "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=400&q=80";
 
-            // Init
             const init = async () => {
                 initMap();
                 await initDB();
                 await loadSaved();
-                updateMap(); // Load markers
+                updateMap(); 
                 Drive.init();
                 
                 document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuidePremium_v1', 1);
+                const req = indexedDB.open('GuideSil_v26', 1); // Retour à la DB d'origine
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
 
             const loadSaved = () => new Promise(r => {
+                if(!db) return r();
                 db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => {
                     savedPlaces = e.target.result || [];
                     r();
@@ -577,82 +550,110 @@
                 tx.oncomplete = () => { savedPlaces = data; r(); };
             });
 
-            // Map & Clusters
+            // Map Logic (Classique)
             const initMap = () => {
                 map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
                 
-                // Initialize Cluster Group
-                clusterGroup = L.markerClusterGroup({
-                    showCoverageOnHover: false,
-                    maxClusterRadius: 35,
-                    iconCreateFunction: function(cluster) {
-                        return L.divIcon({ 
-                            html: `<div>${cluster.getChildCount()}</div>`, 
-                            className: 'marker-cluster marker-cluster-small', 
-                            iconSize: new L.Point(40, 40) 
-                        });
-                    }
-                });
-                map.addLayer(clusterGroup);
-
-                map.on('moveend', () => { if(map.getZoom()>13 && document.getElementById('creation-ui').classList.contains('hidden')) scan(); });
+                // RESTORE SCANNING
+                map.on('moveend', () => { if(!isCreating && map.getZoom() > 13) scan(); });
+                setTimeout(scan, 1000);
             };
 
+            // Fonction Scan Overpass API restaurée
             const scan = async () => {
-                // Fetch from Overpass if needed (only if few saved places in view)
-                // Simplified for this demo: only map saved items for performance/cleanliness 
-                // but you can uncomment overpass logic if desired.
+                const b = map.getBounds();
+                const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
+                try {
+                    const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
+                    const d = await r.json();
+                    
+                    const newP = d.elements.map(e => ({
+                        id: e.id, name: e.tags.name || "Inconnu",
+                        addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
+                        lat: e.lat, lon: e.lon
+                    }));
+                    
+                    allPlaces = [...savedPlaces];
+                    newP.forEach(n => { if(!savedPlaces.find(s=>s.id===n.id)) allPlaces.push(n); });
+                    updateMap();
+                } catch(e){}
             };
 
             const updateMap = () => {
-                clusterGroup.clearLayers();
+                // Clear old markers
+                markers.forEach(m => map.removeLayer(m.marker));
+                markers = [];
+                applyFilters();
+            };
+
+            const applyFilters = () => {
                 const term = document.getElementById('inp-filter').value.toLowerCase();
                 
-                savedPlaces.forEach(p => {
-                    if(term && !p.name.toLowerCase().includes(term)) return;
+                // Clear again
+                markers.forEach(m => map.removeLayer(m.marker));
+                markers = [];
 
-                    const score = p.score?.total || 0;
-                    // Define visuals
-                    let colorClass = 'med';
-                    if(score >= 8) colorClass = 'high';
-                    if(score < 5) colorClass = 'low';
+                allPlaces.forEach(p => {
+                    const isSaved = savedPlaces.find(s=>s.id===p.id);
+                    // Filter match
+                    const match = !term || (p.name && p.name.toLowerCase().includes(term));
                     
-                    const html = `<div class="pin-bubble ${colorClass}">${score}</div>`;
+                    // Design des marqueurs
+                    let html;
+                    let divClass = "custom-pin";
+                    if(!match) divClass += " dimmed";
+
+                    if(isSaved) {
+                        const score = p.score?.total || 0;
+                        let bubbleClass = "saved-med";
+                        if(score >= 8) bubbleClass = "saved-high";
+                        if(score < 5) bubbleClass = "saved-low";
+                        html = `<div class="pin-bubble ${bubbleClass}">${score}</div>`;
+                    } else {
+                        // Unsaved places show as fork icon (gray)
+                        html = `<div class="pin-bubble unsaved"><i class="fa-solid fa-utensils"></i></div>`;
+                    }
                     
-                    const marker = L.marker([p.lat, p.lon], {
-                        icon: L.divIcon({ className: 'custom-pin', html: html })
+                    const m = L.marker([p.lat, p.lon], {
+                        icon: L.divIcon({className: divClass, html: html, iconAnchor:[17,34]}),
+                        zIndexOffset: isSaved ? 1000 : 0
+                    }).addTo(map);
+                    
+                    m.on('click', () => {
+                        if(!match && isSaved) return; // Si filtré mais visible en dim, on peut bloquer ou laisser
+                        select(p, isSaved);
                     });
                     
-                    marker.on('click', () => select(p));
-                    clusterGroup.addLayer(marker);
+                    markers.push({marker:m});
                 });
             };
 
-            // Interactions
-            const select = (p) => {
-                selectedPlace = p;
-                map.flyTo([p.lat - 0.002, p.lon], 16); // Slight offset for bottom sheet
+            // Interactions (Logic restored)
+            const select = (p, saved) => {
+                selectedPlace = saved || p;
+                map.flyTo([p.lat - 0.002, p.lon], 16); // Offset pour laisser place au banner
                 
-                document.getElementById('ban-title').innerText = p.name || "Sans nom";
-                document.getElementById('ban-sub').innerText = p.addr || "Position GPS";
+                document.getElementById('ban-title').innerText = p.name || "Inconnu";
+                document.getElementById('ban-sub').innerText = p.addr || "Lieu scanné";
                 
-                const s = p.score?.total;
                 const badge = document.getElementById('ban-badge');
-                if(s) {
+                if(selectedPlace.score?.total) {
+                    const s = selectedPlace.score.total;
                     badge.innerText = `Note: ${s}/10`;
                     badge.className = `ban-badge ${s>=8?'high':(s>=5?'med':'')}`;
                 } else {
-                    badge.innerText = "Nouveau";
+                    badge.innerText = "Non enregistré";
                     badge.className = "ban-badge";
                 }
                 
-                document.getElementById('ban-img').src = p.img || DEF_IMG;
+                document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
                 document.getElementById('banner').classList.add('active');
             };
 
             // Modes
             const startCreation = () => {
+                isCreating = true;
                 document.getElementById('main-ctrls').style.display = 'none';
                 document.getElementById('banner').classList.remove('active');
                 document.getElementById('target-marker').classList.add('visible');
@@ -660,6 +661,7 @@
             };
 
             const cancelCreation = () => {
+                isCreating = false;
                 document.getElementById('main-ctrls').style.display = 'flex';
                 document.getElementById('target-marker').classList.remove('visible');
                 document.getElementById('creation-ui').classList.remove('visible');
@@ -677,7 +679,7 @@
                 };
                 cancelCreation();
                 savedPlaces.push(newP);
-                select(newP);
+                select(newP, newP);
                 openModal();
             };
 
@@ -733,7 +735,6 @@
             };
 
             const save = () => {
-                if(!selectedPlace) return;
                 const updated = {
                     ...selectedPlace,
                     name: document.getElementById('e-name').value || "Lieu sans nom",
@@ -743,17 +744,15 @@
                     img: currentImg
                 };
                 
-                // Update Local Array
+                const tx = db.transaction('places', 'readwrite');
+                tx.objectStore('places').put(updated);
+
                 const idx = savedPlaces.findIndex(x => x.id === updated.id);
                 if(idx > -1) savedPlaces[idx] = updated; else savedPlaces.push(updated);
                 
-                // Persist
-                db.transaction('places', 'readwrite').objectStore('places').put(updated);
-                
-                // UI
                 closeModal();
                 updateMap();
-                select(updated);
+                select(updated, updated);
                 Drive.save(savedPlaces);
                 toast("Lieu enregistré !");
             };
@@ -769,53 +768,47 @@
                 toast("Lieu supprimé");
             };
 
-            // List View & Filters
+            // List View Logic (Restaurée sans les chips compliqués)
             const nav = (view) => {
                 document.getElementById('nav-map').classList.toggle('active', view === 'map');
                 document.getElementById('nav-list').classList.toggle('active', view === 'list');
                 const lv = document.getElementById('list-view');
-                if(view === 'list') { 
-                    filterList('all', document.querySelector('.chip.active')); // Render list
-                    lv.classList.add('open'); 
-                } else { 
-                    lv.classList.remove('open'); 
-                }
+                if(view === 'list') { renderList(); lv.classList.add('open'); }
+                else lv.classList.remove('open');
             };
 
-            const filterList = (criteria, chipEl) => {
-                // UI Chips
-                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                if(chipEl) chipEl.classList.add('active');
-
-                // Logic
-                let data = [...savedPlaces];
-                if(criteria === 'top') data = data.filter(x => (x.score?.total || 0) >= 8);
-                if(criteria === 'cheap') data = data.filter(x => (x.price?.max || 999) < 30 && x.price?.max);
-                if(criteria === 'photos') data = data.filter(x => x.img);
-                
-                // Sorting: highest score first
-                data.sort((a,b) => (b.score?.total || 0) - (a.score?.total || 0));
-
-                renderList(data);
-            };
-
-            const renderList = (data) => {
+            const renderList = () => {
                 const container = document.getElementById('list-body');
-                if(!data.length) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc">Aucun lieu trouvé</div>'; return; }
+                if(!savedPlaces.length) { container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc">Carnet vide</div>'; return; }
                 
-                container.innerHTML = data.map(p => `
-                    <div class="list-card" onclick="App.goto(${p.id})">
-                        <img src="${p.img || DEF_IMG}" style="width:70px; height:70px; border-radius:10px; object-fit:cover">
-                        <div style="flex:1">
-                            <div style="font-weight:700; font-size:16px; margin-bottom:4px">${p.name}</div>
-                            <div style="font-size:12px; color:#64748b; margin-bottom:6px">${p.addr.substring(0,30)}...</div>
-                            <div style="font-size:11px; font-weight:700; color:var(--primary)">
-                                <i class="fa-solid fa-star"></i> ${p.score?.total || '-'} / 10
+                // Group by City
+                const groups = {};
+                savedPlaces.forEach(p => {
+                    let city = "DIVERS";
+                    if(p.addr) {
+                        const parts = p.addr.toUpperCase().split(' ');
+                        const i = parts.findIndex(x=>/^\d{5}$/.test(x));
+                        if(i>-1 && parts[i+1]) city = parts[i+1];
+                    }
+                    if(!groups[city]) groups[city] = [];
+                    groups[city].push(p);
+                });
+
+                container.innerHTML = Object.keys(groups).sort().map(city => `
+                    <div class="city-group">
+                        <div class="city-title">${city}</div>
+                        ${groups[city].map(p => `
+                            <div class="list-card" onclick="App.goto(${p.id})">
+                                <img src="${p.img || DEF_IMG}" style="width:70px; height:70px; border-radius:10px; object-fit:cover">
+                                <div style="flex:1">
+                                    <div style="font-weight:700; font-size:16px; margin-bottom:4px">${p.name}</div>
+                                    <div style="font-size:12px; color:#64748b; margin-bottom:6px">${p.addr ? p.addr.substring(0,30)+'...' : '...'}</div>
+                                    <div style="font-size:11px; font-weight:700; color:var(--primary)">
+                                        <i class="fa-solid fa-star"></i> ${p.score?.total || '-'} / 10
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div style="font-size:12px; font-weight:600; color:#94a3b8">
-                            ${p.price?.max ? p.price.max+'€' : ''}
-                        </div>
+                        `).join('')}
                     </div>
                 `).join('');
             };
@@ -823,11 +816,10 @@
             const goto = (id) => {
                 nav('map');
                 const p = savedPlaces.find(x => x.id === id);
-                if(p) setTimeout(() => select(p), 300);
+                if(p) setTimeout(() => select(p, p), 300);
             };
 
             // Utils
-            const applyFilters = () => updateMap(); // Trigger map refresh
             const locate = () => {
                 if(navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(p => {
@@ -847,9 +839,9 @@
                 t.innerText = m; t.classList.add('visible');
                 setTimeout(()=>t.classList.remove('visible'), 2500);
             };
-            const refresh = () => updateMap();
+            const refresh = () => { updateMap(); toast("Données sync."); };
 
-            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, locate, filterList, goto, toast };
+            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, locate, goto, toast };
         })();
 
         window.onload = App.init;
