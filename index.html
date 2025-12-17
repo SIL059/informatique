@@ -1,15 +1,3 @@
-C'est un problème classique : le code JavaScript a probablement rencontré une erreur de syntaxe (une parenthèse manquante ou une virgule oubliée) lors de la copie, ce qui fait que l'application ne se charge pas du tout. C'est pour cela que App n'est pas défini et que rien ne clique.
-
-J'ai corrigé l'erreur technique (le script est maintenant blindé) et j'ai remis le style des "barres de chargement" (les jauges de notation) avec un look épais et coloré, comme vous l'avez demandé.
-
-Voici le code complet, prêt à l'emploi. Copiez-le intégralement pour remplacer votre fichier actuel.
-
-code
-Html
-play_circle
-download
-content_copy
-expand_less
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -18,10 +6,9 @@ expand_less
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- Fix Favicon 404 -->
     <link rel="icon" href="data:,">
     
-    <title>Guide Michelin SIL - V28 Stable</title>
+    <title>Guide Michelin SIL - V29 Van</title>
     
     <!-- FONTS & ICONS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,16 +22,14 @@ expand_less
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
-        /* --- DESIGN SYSTEM VIBRANT --- */
+        /* --- DESIGN SYSTEM --- */
         :root {
             --primary: #E11D48;
             --accent: #0F172A;
-            
-            /* Couleurs Bulles */
-            --c-high: #16a34a; /* Vert */
-            --c-med: #f59e0b;  /* Orange */
-            --c-low: #ef4444;  /* Rouge */
-            --c-new: #3b82f6;  /* Bleu (Scan) */
+            --c-high: #16a34a; 
+            --c-med: #f59e0b;
+            --c-low: #ef4444;
+            --c-new: #3b82f6; 
 
             --shadow-hard: 0 4px 15px rgba(0, 0, 0, 0.12);
             --radius-md: 14px;
@@ -66,7 +51,7 @@ expand_less
             display: flex; flex-direction: column;
         }
         
-        /* HEADER (Clics forcés avec pointer-events) */
+        /* HEADER */
         .header-wrap {
             padding: max(10px, env(safe-area-inset-top)) 16px 10px;
             display: flex; flex-direction: column; gap: 12px;
@@ -84,13 +69,15 @@ expand_less
         .btn-icon {
             width: 44px; height: 44px; border-radius: 50%; background: white; border: none;
             color: #333; font-size: 18px; box-shadow: var(--shadow-hard);
-            cursor: pointer; pointer-events: auto; /* IMPORTANT */
+            cursor: pointer; pointer-events: auto;
             display: flex; align-items: center; justify-content: center; transition: 0.1s;
         }
         .btn-icon:active { transform: scale(0.9); }
         .btn-icon.connected { color: var(--c-high); border: 2px solid var(--c-high); }
         .btn-icon.syncing { color: var(--c-med); border: 2px solid var(--c-med); animation: rotate 1s infinite linear; }
+        .btn-icon.active-loc { background: var(--c-new); color: white; border: 2px solid white; }
 
+        /* SEARCH BAR */
         .search-bar {
             background: white; border-radius: var(--radius-md); 
             box-shadow: var(--shadow-hard); display: flex; padding: 4px; gap: 4px; pointer-events: auto;
@@ -104,6 +91,15 @@ expand_less
             font-family: var(--font-body); font-weight: 600; font-size: 14px; color: #333;
         }
 
+        /* LOADER (NEW) */
+        .loader-pill {
+            align-self: center; background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+            opacity: 0; transition: 0.3s; pointer-events: none; margin-top: 10px;
+        }
+        .loader-pill.visible { opacity: 1; }
+        .spin { animation: rotate 1s infinite linear; }
+
         /* FABs */
         .fabs {
             position: absolute; bottom: 120px; right: 16px; 
@@ -116,7 +112,7 @@ expand_less
         }
         .fab-primary { background: var(--primary); color: white; }
 
-        /* MARKERS */
+        /* RESTAURANT MARKERS */
         .custom-pin {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 36px !important; height: 36px !important; 
@@ -135,6 +131,17 @@ expand_less
         .pin-bubble.med { background: var(--c-med); }
         .pin-bubble.low { background: var(--c-low); }
         .pin-bubble.unsaved { background: var(--c-new); color: white; }
+
+        /* USER LOCATION (VAN) MARKER */
+        .user-pin {
+            display: flex; align-items: center; justify-content: center;
+            width: 44px !important; height: 44px !important;
+            margin-left: -22px !important; margin-top: -22px !important;
+            background: var(--accent); border: 3px solid white; border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); color: white; font-size: 18px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(15, 23, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); } }
 
         /* BANNER */
         .banner {
@@ -168,29 +175,20 @@ expand_less
         .modal-overlay.open .sheet { transform: translateY(0); }
         .sheet-body { padding: 24px; overflow-y: auto; }
 
-        /* INPUTS & SLIDERS (Barres de chargement style) */
+        /* INPUTS */
         .modern-input {
             width: 100%; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 12px; font-family: var(--font-body); font-weight: 500; font-size: 15px; margin-bottom: 12px;
         }
-        
-        /* STYLE JAUGES (Barres) */
         .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
         .slider-row span { width: 70px; font-size: 13px; font-weight: 700; color: #475569; }
-        
-        input[type=range] {
-            flex: 1; -webkit-appearance: none; height: 10px; border-radius: 5px; background: #e2e8f0; outline: none;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
-            background: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 2px solid white; cursor: pointer;
-        }
+        input[type=range] { flex: 1; -webkit-appearance: none; height: 10px; border-radius: 5px; background: #e2e8f0; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); border: 2px solid white; cursor: pointer; }
 
         /* CREATION */
         .target-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:500; display:none; pointer-events:none; }
         .target-center.visible { display:block; }
         .pin-target { width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3); }
-        
         .creation-ui { position:absolute; bottom:110px; left:0; right:0; text-align:center; display:none; pointer-events:auto; }
         .creation-ui.visible { display:block; }
         .btn-confirm { background:var(--primary); color:white; padding:12px 24px; border-radius:30px; border:none; font-weight:700; box-shadow:var(--shadow-hard); cursor: pointer; }
@@ -204,7 +202,6 @@ expand_less
         .list-view.open { transform: translateX(0); }
         .list-head { padding: 50px 20px 20px; background: white; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
         .list-body { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
-        
         .list-card {
             background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px;
             display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -236,29 +233,32 @@ expand_less
         <div class="header-wrap">
             <div class="top-row">
                 <div class="app-title"><i class="fa-solid fa-star"></i> Guide SIL</div>
-                <!-- BOUTON DRIVE -->
                 <button class="btn-icon" id="drive-btn" onclick="Drive.handleAuth()">
                     <i class="fa-brands fa-google-drive"></i>
                 </button>
             </div>
-            <!-- RECHERCHE -->
+            <!-- RECHERCHE & FILTRE -->
             <div class="search-bar">
                 <div class="search-input-group">
-                    <i class="fa-solid fa-location-dot" style="color:#999; margin-right:8px"></i>
-                    <input type="text" id="inp-city" placeholder="Ville...">
+                    <i class="fa-solid fa-map-pin" style="color:#999; margin-right:8px"></i>
+                    <input type="text" id="inp-city" placeholder="Aller à une ville...">
                 </div>
                 <div style="width:1px; background:#ddd; margin:6px 0"></div>
                 <div class="search-input-group">
-                    <i class="fa-solid fa-magnifying-glass" style="color:#999; margin-right:8px"></i>
-                    <input type="text" id="inp-filter" placeholder="Nom..." oninput="App.applyFilters()">
+                    <i class="fa-solid fa-filter" style="color:#999; margin-right:8px"></i>
+                    <input type="text" id="inp-filter" placeholder="Filtrer nom..." oninput="App.applyFilters()">
                 </div>
+            </div>
+            <!-- LOADER -->
+            <div class="loader-pill" id="loader">
+                <i class="fa-solid fa-circle-notch spin"></i> Recherche des restaurants...
             </div>
         </div>
 
         <!-- FABs -->
         <div class="fabs" id="main-ctrls">
             <button class="fab-btn fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
-            <button class="fab-btn" onclick="App.locate()"><i class="fa-solid fa-crosshairs"></i></button>
+            <button class="fab-btn" id="btn-loc" onclick="App.toggleLocate()"><i class="fa-solid fa-location-arrow"></i></button>
         </div>
 
         <!-- BANNER -->
@@ -313,7 +313,6 @@ expand_less
                     <span id="score-display" style="font-weight:800; color:var(--primary)">0.0</span>
                 </div>
                 
-                <!-- BARRES DE CHARGEMENT (SLIDERS) -->
                 <div class="slider-row"><span>Goût</span><input type="range" min="0" max="10" step="0.5" id="r-taste" oninput="App.calc()"></div>
                 <div class="slider-row"><span>Service</span><input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()"></div>
                 <div class="slider-row"><span>Cadre</span><input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()"></div>
@@ -329,7 +328,6 @@ expand_less
         </div>
     </div>
 
-    <!-- TOAST -->
     <div class="toast" id="toast">Msg</div>
 
     <!-- NAV -->
@@ -340,7 +338,7 @@ expand_less
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- MODULE DRIVE ---
+        // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -360,17 +358,13 @@ expand_less
                             await sync();
                         }
                     });
-                } catch(e) { console.error("Google Auth Error", e); }
+                } catch(e) {}
             };
 
             const handleAuth = () => {
                 if(token) {
                     if(confirm("Déconnexion ?")) { token = null; document.getElementById('drive-btn').className='btn-icon'; }
-                } else if(tokenClient) {
-                    tokenClient.requestAccessToken();
-                } else {
-                    alert("Google API non chargée. Vérifiez votre connexion.");
-                }
+                } else if(tokenClient) { tokenClient.requestAccessToken(); }
             };
 
             const getFileId = async () => {
@@ -378,7 +372,6 @@ expand_less
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
                 const d = await r.json();
                 if(d.files && d.files.length) return d.files[0].id;
-                
                 const meta = { name: FILE_NAME, mimeType: 'application/json' };
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
@@ -398,7 +391,7 @@ expand_less
                     let changed = false;
                     driveData.forEach(d => { if(!localData.find(l=>l.id===d.id)) { localData.push(d); changed = true; } });
                     if(changed) { await App.saveAll(localData); App.refresh(); }
-                } catch(e) { console.error(e); }
+                } catch(e) {}
                 document.getElementById('drive-btn').classList.remove('syncing');
             };
 
@@ -415,7 +408,7 @@ expand_less
             return { init, handleAuth, save, sync };
         })();
 
-        // --- MODULE APP ---
+        // --- APP ENGINE ---
         const App = (() => {
             let map, db;
             let markers = [];
@@ -423,6 +416,8 @@ expand_less
             let selectedPlace = null;
             let currentImg = null;
             let isCreating = false;
+            let isLocating = false;
+            let userMarker = null;
             
             const DEF_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80";
 
@@ -432,20 +427,13 @@ expand_less
                     await initDB();
                     await loadSaved();
                     updateMap();
-                    
-                    // Events
                     document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
-                    
-                    // Init Google
                     Drive.init();
-                } catch(e) {
-                    console.error("App Init Error", e);
-                    alert("Erreur de chargement. Rechargez la page.");
-                }
+                } catch(e) { console.error(e); }
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_v28', 1);
+                const req = indexedDB.open('GuideSil_V29', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db = e.target.result; r(); };
             });
@@ -460,17 +448,33 @@ expand_less
                 tx.oncomplete = () => { savedPlaces = data; r(); };
             });
 
-            // MAP
+            // MAP & SCANNER
             const initMap = () => {
                 map = L.map('map', {zoomControl: false, attributionControl: false}).setView([48.8566, 2.3522], 13);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
-                map.on('moveend', () => { if(!isCreating && map.getZoom() > 13) scan(); });
+                
+                // Scan on move (if not creating)
+                map.on('moveend', () => { 
+                    if(isLocating) return; // Don't scan randomly if tracking user
+                    if(!isCreating && map.getZoom() > 13) scan(); 
+                });
+                
+                // Stop location tracking if user drags
+                map.on('dragstart', () => {
+                    if(isLocating) { isLocating = false; document.getElementById('btn-loc').classList.remove('active-loc'); }
+                });
+                
                 setTimeout(scan, 1000);
             };
 
-            const scan = async () => {
-                const b = map.getBounds();
-                const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
+            const scan = async (centerOverride) => {
+                // Buffer 50% around screen (0.5 padding)
+                const b = map.getBounds().pad(0.5); 
+                const q = `[out:json][timeout:5];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 40;`;
+                
+                const loader = document.getElementById('loader');
+                loader.classList.add('visible');
+                
                 try {
                     const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
                     const d = await r.json();
@@ -479,10 +483,13 @@ expand_less
                         addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
                         lat: e.lat, lon: e.lon
                     }));
+                    
                     allPlaces = [...savedPlaces];
                     newP.forEach(n => { if(!savedPlaces.find(s=>s.id===n.id)) allPlaces.push(n); });
                     updateMap();
                 } catch(e){}
+                
+                loader.classList.remove('visible');
             };
 
             const updateMap = () => {
@@ -545,6 +552,39 @@ expand_less
                 
                 document.getElementById('ban-img').src = selectedPlace.img || DEF_IMG;
                 document.getElementById('banner').classList.add('active');
+            };
+
+            // GEOLOCATION (VAN)
+            const toggleLocate = () => {
+                if(isLocating) {
+                    // Turn off
+                    isLocating = false;
+                    document.getElementById('btn-loc').classList.remove('active-loc');
+                } else {
+                    // Turn on
+                    isLocating = true;
+                    document.getElementById('btn-loc').classList.add('active-loc');
+                    
+                    navigator.geolocation.getCurrentPosition(p => {
+                        const lat = p.coords.latitude;
+                        const lon = p.coords.longitude;
+                        
+                        // Center Map
+                        map.setView([lat, lon], 16);
+                        
+                        // User Marker (Van)
+                        if(userMarker) map.removeLayer(userMarker);
+                        const vanHtml = `<div class="user-pin"><i class="fa-solid fa-truck-fast"></i></div>`;
+                        userMarker = L.marker([lat, lon], {
+                            icon: L.divIcon({ className: 'van-wrap', html: vanHtml, iconSize:[40,40] }),
+                            zIndexOffset: 2000
+                        }).addTo(map);
+
+                        // Immediate Scan
+                        scan();
+                        
+                    }, err => { alert("Position impossible"); isLocating = false; });
+                }
             };
 
             // ACTIONS
@@ -622,14 +662,13 @@ expand_less
             
             const goto = (id) => { nav('map'); const p=savedPlaces.find(x=>x.id===id); if(p) setTimeout(()=>select(p,p),300); };
             const searchCity = async (v) => { if(v.length<3)return; const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`); const d=await r.json(); if(d.length) map.setView([d[0].lat, d[0].lon], 13); };
-            const locate = () => navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude], 15));
+            
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2500); };
             const refresh = () => { updateMap(); toast("Sync OK"); };
 
-            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, locate, goto, toast };
+            return { init, getData, saveAll, refresh, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, handleImage, calc, nav, applyFilters, toggleLocate, goto, toast };
         })();
 
-        // GLOBAL EXPORT & START
         window.Drive = Drive;
         window.App = App;
         window.onload = App.init;
