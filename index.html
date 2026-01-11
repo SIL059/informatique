@@ -326,6 +326,14 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // --- GESTIONNAIRE D'ERREUR GLOBAL (RICK ROLL) ---
+        window.onerror = function(message, source, lineno, colno, error) {
+            // En cas d'erreur JavaScript non interceptée, on redirige.
+            window.location.href = 'https://www.rickroll.it/rickroll.mp4';
+            // Empêche le navigateur d'afficher son propre message d'erreur.
+            return true;
+        };
+
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
@@ -695,3 +703,4 @@
     </script>
 </body>
 </html>
+  
