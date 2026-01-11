@@ -76,6 +76,15 @@
         }
         .brand { font-family: var(--font-display); font-size: 22px; font-weight: 900; display:flex; gap:10px; align-items:center; color: var(--dark); }
         
+        /* --- EASTER EGG STYLE --- */
+        #easter-egg-trigger {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        #easter-egg-trigger:active {
+            transform: scale(0.8) rotate(-15deg);
+        }
+
         .search-box {
             background: white; border-radius: 12px; display: flex; align-items: center; padding: 0 12px; height: 44px;
             border: 1px solid white; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -218,7 +227,7 @@
         <div class="sidebar">
             <div class="sb-header">
                 <div style="display:flex; justify-content:space-between">
-                    <div class="brand"><i class="fa-solid fa-map-location-dot"></i> Guide SIL</div>
+                    <div class="brand"><i id="easter-egg-trigger" class="fa-solid fa-map-location-dot"></i> Guide SIL</div>
                     <button class="btn-drive" id="drive-btn" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; color:#64748b; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
                 </div>
                 <div class="search-box">
@@ -326,11 +335,9 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- GESTIONNAIRE D'ERREUR GLOBAL (RICK ROLL) ---
+        // --- GESTIONNAIRE D'ERREUR GLOBAL (FALLBACK RICK ROLL) ---
         window.onerror = function(message, source, lineno, colno, error) {
-            // En cas d'erreur JavaScript non interceptée, on redirige.
             window.location.href = 'https://www.rickroll.it/rickroll.mp4';
-            // Empêche le navigateur d'afficher son propre message d'erreur.
             return true;
         };
 
@@ -404,6 +411,10 @@
             let sortMode = 'score';
             let lastCenter = null;
 
+            const triggerRickRoll = () => {
+                window.location.href = 'https://www.rickroll.it/rickroll.mp4';
+            };
+
             const init = async () => {
                 try {
                     initMap();
@@ -412,6 +423,10 @@
                     updateMap();
                     renderGlobalList();
                     document.getElementById('inp-city').addEventListener('change', e => searchCity(e.target.value));
+                    
+                    // --- EASTER EGG EVENT LISTENER ---
+                    document.getElementById('easter-egg-trigger').addEventListener('dblclick', triggerRickRoll);
+                    
                     Drive.init();
                     if(navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(p => { map.setView([p.coords.latitude, p.coords.longitude], 15); }, () => {}); 
@@ -702,5 +717,4 @@
         window.onload = App.init;
     </script>
 </body>
-</html>
-  
+                    </html>
