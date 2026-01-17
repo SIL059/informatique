@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,7 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#cbd5e1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="icon" href="data:,">
+    
+    <!-- LOGO (FAVICON) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
     
     <title>Guide SIL - V41 Ultimate</title>
     
@@ -194,7 +198,6 @@
                 
                 <div class="fabs pointer-auto" id="main-ctrls">
                     <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
-                    <button class="fab" id="btn-loc" onclick="App.toggleLocate()"><i class="fa-solid fa-location-crosshairs"></i></button>
                 </div>
 
                 <div class="map-banner pointer-auto" id="banner">
@@ -388,9 +391,15 @@
         // --- APP LOGIC ---
         const App = (() => {
             let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
-            let isCreating=false, isLocating=false, sortMode='score';
+            let isCreating=false, sortMode='score';
 
             const init = async () => {
+                // --- GESTIONNAIRE D'ERREUR GLOBAL (FALLBACK RICK ROLL) ---
+                window.onerror = function(message, source, lineno, colno, error) {
+                   playVideo();
+                   return true;
+                };
+
                 initMap();
                 await initDB();
                 await loadSaved();
@@ -402,7 +411,6 @@
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
                 
                 Drive.init();
-                if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>{map.setView([p.coords.latitude, p.coords.longitude], 15);}, ()=>{});
             };
 
             const playVideo = () => {
@@ -438,7 +446,6 @@
 
             const scan = async () => {
                 const b = map.getBounds().pad(0.2);
-                // TIMEOUT augmenté à 25s
                 const q = `[out:json][timeout:25];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
                 document.getElementById('loader').classList.add('visible');
                 try {
@@ -680,11 +687,6 @@
                 }).join('');
             };
 
-            const toggleLocate = () => {
-                if(isLocating){ isLocating=false; document.getElementById('btn-loc').style.background='white'; document.getElementById('btn-loc').style.color='#334155'; }
-                else { isLocating=true; document.getElementById('btn-loc').style.background='#3b82f6'; document.getElementById('btn-loc').style.color='white'; navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude],16)); }
-            };
-
             const searchCity = async (v) => {
                 if(v.length<3) return;
                 const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
@@ -703,7 +705,15 @@
             const flyToPlace = (id) => { const p=savedPlaces.find(x=>x.id===id); if(p){ switchTab('map'); setTimeout(()=>select(p,p),300); } };
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
 
-            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, toggleLocate, flyToPlace, toast, refreshUI, toggleCityMode, refreshCitiesDropdown };
+            // IMPORTANT: DÉFINITION EXPLICITE DE REFRESH AVANT LE RETURN
+            const refresh = () => {
+                updateMap();
+                refreshCities();
+                renderGlobalList();
+                toast("Sync OK");
+            };
+
+            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI, toggleCityMode, refreshCitiesDropdown };
         })();
 
         window.onload = App.init;
