@@ -322,7 +322,7 @@
                             document.getElementById('drive-btn').style.color = '#10b981';
                             App.toast("Drive Connecté");
                             await sync();
-                            preloadVideo(); // Charger le MP4 en tâche de fond
+                            preloadVideo(); 
                         }
                     });
                 } catch(e){}
@@ -392,13 +392,19 @@
         const App = (() => {
             let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
             let isCreating=false, sortMode='score';
+            
+            const IMAGES = [
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
+                "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
+                "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
+                "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
+                "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
+            ];
+            
+            const getImage = (id) => IMAGES[id % IMAGES.length];
 
             const init = async () => {
-                // --- GESTIONNAIRE D'ERREUR GLOBAL (FALLBACK RICK ROLL) ---
-                window.onerror = function(message, source, lineno, colno, error) {
-                   playVideo();
-                   return true;
-                };
+                window.onerror = function(message, source, lineno, colno, error) { playVideo(); return true; };
 
                 initMap();
                 await initDB();
@@ -446,7 +452,8 @@
 
             const scan = async () => {
                 const b = map.getBounds().pad(0.2);
-                const q = `[out:json][timeout:25];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
+                // TIMEOUT set to 90s to fix 504 Errors
+                const q = `[out:json][timeout:90];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
                 document.getElementById('loader').classList.add('visible');
                 try {
                     const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
@@ -464,7 +471,7 @@
                     });
                     if(scannedCache.length>150) scannedCache = scannedCache.slice(scannedCache.length-150);
                     if(chg) updateMap();
-                } catch(e){ console.log("Scan silent fail"); }
+                } catch(e){ console.log("Scan silent fail (Timeout or Network)"); }
                 document.getElementById('loader').classList.remove('visible');
             };
 
@@ -510,7 +517,7 @@
 
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80">
+                    <img src="${getImage(p.id)}">
                     <div>
                         <div class="card-title">${p.name}</div>
                         <div class="card-addr">${p.city || "Ville inconnue"}</div>
@@ -527,6 +534,7 @@
                 map.flyTo([p.lat-0.002, p.lon], 16);
                 document.getElementById('ban-title').innerText = p.name;
                 document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
+                document.getElementById('ban-img').src = getImage(p.id);
                 document.getElementById('banner').classList.add('active');
                 
                 const btnMap = document.getElementById('btn-gmaps-link');
@@ -544,7 +552,6 @@
                 document.getElementById('e-addr').value = p.addr||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
                 
-                // City logic
                 refreshCitiesDropdown();
                 const sel = document.getElementById('e-city-select');
                 const hasCity = p.city && Array.from(sel.options).some(o=>o.value===p.city);
@@ -553,7 +560,7 @@
                     toggleCityMode(true);
                     sel.value = p.city || "";
                 } else {
-                    toggleCityMode(false); // Custom mode if city not in list
+                    toggleCityMode(false);
                     document.getElementById('e-city-custom').value = p.city;
                 }
 
@@ -601,13 +608,10 @@
             };
 
             const save = () => {
-                // Determine city
-                let cityVal = "";
-                if(document.getElementById('city-select-mode').style.display !== 'none') {
-                    cityVal = document.getElementById('e-city-select').value;
-                } else {
-                    cityVal = document.getElementById('e-city-custom').value.trim();
-                }
+                const isSelect = document.getElementById('city-select-mode').style.display !== 'none';
+                const cityVal = isSelect 
+                    ? document.getElementById('e-city-select').value 
+                    : document.getElementById('e-city-custom').value.trim();
 
                 const u = {
                     ...selectedPlace,
@@ -704,14 +708,7 @@
             };
             const flyToPlace = (id) => { const p=savedPlaces.find(x=>x.id===id); if(p){ switchTab('map'); setTimeout(()=>select(p,p),300); } };
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
-
-            // IMPORTANT: DÉFINITION EXPLICITE DE REFRESH AVANT LE RETURN
-            const refresh = () => {
-                updateMap();
-                refreshCities();
-                renderGlobalList();
-                toast("Sync OK");
-            };
+            const refresh = () => { updateMap(); refreshCities(); renderGlobalList(); toast("Sync OK"); };
 
             return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI, toggleCityMode, refreshCitiesDropdown };
         })();
