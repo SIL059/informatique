@@ -1,4 +1,5 @@
-  <!DOCTYPE html>
+
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -113,7 +114,6 @@
 
         /* MARKERS */
         .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
-        /* Points scannés supprimés, on garde que les SAVED */
         .pin-saved { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: white; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999 !important; animation: pulse-save 2s infinite; }
         .mk-gold { background: var(--c-gold); }
         .mk-high { background: #10b981; }
@@ -182,12 +182,8 @@
                     <button id="drive-btn" class="needs-auth" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
                 </div>
                 <div class="search-box">
-                    <i class="fa-solid fa-earth-americas" style="color:#94a3b8; margin-right:10px"></i>
-                    <input type="text" id="inp-city" placeholder="Aller à une ville...">
-                </div>
-                <div class="search-box">
                     <i class="fa-solid fa-filter" style="color:#94a3b8; margin-right:10px"></i>
-                    <input type="text" id="inp-filter" placeholder="Filtrer..." oninput="App.refreshUI()">
+                    <input type="text" id="inp-filter" placeholder="Filtrer par ville..." oninput="App.refreshUI()">
                 </div>
             </div>
             <div class="sb-list-content" id="sidebar-list"></div>
@@ -306,6 +302,7 @@
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
             const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+            // JSON NAME RESTORED TO ORIGINAL
             const DB_NAME = "guide_michelin_sil_db.json";
             let tokenClient, token;
 
@@ -392,7 +389,7 @@
         const App = (() => {
             let map, db, markers=[], savedPlaces=[], selectedPlace=null;
             let isCreating=false, sortMode='score';
-            let currentSearchCity = "";
+            let currentFilter = "";
             
             const IMAGES = [
                 "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
@@ -411,9 +408,9 @@
                 await initDB();
                 await loadSaved();
                 updateMap();
-                renderGlobalList();
+                refreshCities();
+                renderGlobalList(); // Ensure initial render
                 
-                document.getElementById('inp-city').addEventListener('change', e=>searchCity(e.target.value));
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
                 
                 Drive.init();
@@ -427,7 +424,7 @@
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V45', 1);
+                const req = indexedDB.open('GuideSil_V46', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db=e.target.result; r(); };
             });
@@ -448,23 +445,39 @@
                 map = L.map('map', {zoomControl:false, attributionControl:false}).setView([50.5, 3.0], 9);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                     maxZoom: 20, 
-                    minZoom: 8 // Empêche de dézoomer trop
+                    minZoom: 8 
                 }).addTo(map);
                 
-                // RESTRICTION ZONE (Nord / Pas de Calais / Belgique frontalière)
-                const bounds = [[49.5, 1.0], [51.5, 4.5]];
+                const bounds = [[49.0, 1.0], [51.5, 4.5]];
                 map.setMaxBounds(bounds);
-            };
 
-            // SCAN SUPPRIMÉ - UNIQUEMENT LES POINTS ENREGISTRÉS
+                // ADDING BORDERS FOR NORD (59) & PAS-DE-CALAIS (62)
+                const depts = ['59', '62'];
+                depts.forEach(d => {
+                    fetch(`https://geo.api.gouv.fr/departements/${d}?fields=nom,code,geojson`)
+                    .then(r => r.json())
+                    .then(data => {
+                        L.geoJSON(data.geojson, {
+                            style: { color: '#E11D48', weight: 2, fillOpacity: 0.05, fillColor: '#E11D48' }
+                        }).addTo(map);
+                    });
+                });
+            };
 
             const updateMap = () => {
                 markers.forEach(m=>map.removeLayer(m.marker)); markers=[];
+                
+                // FILTER ON MAP BASED ON SIDEBAR INPUT
+                const filteredPlaces = savedPlaces.filter(p => {
+                    if(!currentFilter) return true;
+                    return (p.name.toLowerCase().includes(currentFilter) || (p.city||"").toLowerCase().includes(currentFilter));
+                });
+
                 const b = map.getBounds();
-                const visible = savedPlaces.filter(p => b.contains([p.lat, p.lon]));
+                const visible = filteredPlaces.filter(p => b.contains([p.lat, p.lon]));
                 renderSidebar(visible);
 
-                savedPlaces.forEach(p => {
+                filteredPlaces.forEach(p => {
                     const s = p.score?.total||0;
                     let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
                     let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
@@ -480,10 +493,6 @@
                 const c = document.getElementById('sidebar-list');
                 list.sort((a,b)=>(b.score?.total||0)-(a.score?.total||0));
                 
-                if(currentSearchCity) {
-                    list = list.filter(p => p.city && p.city.toLowerCase().includes(currentSearchCity.toLowerCase()));
-                }
-
                 if(!list.length) { c.innerHTML=`<div style="text-align:center;padding:40px;color:#999">Rien ici</div>`; return; }
                 c.innerHTML = list.map(p => makeCard(p)).join('');
             };
@@ -597,6 +606,7 @@
                 
                 closeModal();
                 updateMap();
+                refreshCities();
                 renderGlobalList();
                 select(u,u);
                 Drive.save(savedPlaces);
@@ -608,7 +618,7 @@
                 db.transaction('places','readwrite').objectStore('places').delete(selectedPlace.id);
                 savedPlaces = savedPlaces.filter(p=>p.id!==selectedPlace.id);
                 closeModal(); document.getElementById('banner').classList.remove('active');
-                updateMap(); renderGlobalList(); Drive.save(savedPlaces);
+                updateMap(); refreshCities(); renderGlobalList(); Drive.save(savedPlaces);
             };
 
             const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').style.display='block'; document.getElementById('creation-ui').classList.add('visible'); };
@@ -637,10 +647,12 @@
             
             const renderGlobalList = () => {
                 const c = document.getElementById('global-list');
+                const selectedCity = document.getElementById('city-filter').value;
                 
                 let d = [...savedPlaces];
-                if(currentSearchCity) {
-                     d = d.filter(p => p.city && p.city.toLowerCase().includes(currentSearchCity.toLowerCase()));
+                // APPLY CARNET FILTER
+                if(selectedCity) {
+                     d = d.filter(p => p.city === selectedCity);
                 }
                 
                 d.sort((a,b) => {
@@ -657,31 +669,33 @@
                 
                 c.innerHTML = d.map((p,i) => {
                     let pod=0;
-                    if(sortMode==='score' && !currentSearchCity) pod=i+1;
+                    if(sortMode==='score' && !selectedCity) pod=i+1;
                     return makeCard(p, pod);
                 }).join('');
             };
 
-            const searchCity = async (v) => {
-                currentSearchCity = v.trim();
-                if(v.length<3) return;
-                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
-                const d = await r.json();
-                if(d.length) { 
-                    document.getElementById('banner').classList.remove('active'); 
-                    selectedPlace=null; 
-                    map.setView([d[0].lat, d[0].lon], 14); 
-                }
-                renderGlobalList();
+            // GLOBAL LIST & FILTER
+            const refreshCities = () => {
+                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
+                const s = document.getElementById('city-filter');
+                const old = s.value;
+                s.innerHTML = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+                s.value = old;
             };
 
             const getData = () => new Promise(r=>r(savedPlaces));
-            const refreshUI = () => updateMap();
+            
+            // DYNAMIC SIDEBAR SEARCH
+            const refreshUI = () => {
+                currentFilter = document.getElementById('inp-filter').value.toLowerCase().trim();
+                updateMap();
+            };
+
             const switchTab = (t) => {
                 document.querySelectorAll('.app-view').forEach(e=>e.classList.remove('active'));
                 document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
                 if(t==='map'){ document.getElementById('view-map').classList.add('active'); document.getElementById('nav-map').classList.add('active'); setTimeout(()=>map.invalidateSize(),100); }
-                else { document.getElementById('view-list').classList.add('active'); document.getElementById('nav-list').classList.add('active'); renderGlobalList(); }
+                else { document.getElementById('view-list').classList.add('active'); document.getElementById('nav-list').classList.add('active'); refreshCities(); renderGlobalList(); }
             };
             
             const flyToPlace = (id) => { 
