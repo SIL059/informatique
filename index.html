@@ -1,6 +1,5 @@
 
-
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +10,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
     
-    <title>Guide SIL - V41 Ultimate</title>
+    <title>Guide SIL - V42 Ultimate</title>
     
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -147,10 +146,14 @@
         
         .inp-group { margin-bottom: 12px; }
         .inp-std { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-family: var(--font-body); }
-        .city-row { display: flex; gap: 8px; }
-        .city-row select { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-weight: 600; }
-        .btn-plus { width: 50px; border-radius: 12px; background: #f1f5f9; border: none; cursor: pointer; font-size: 20px; color: var(--dark); }
         
+        /* FIX CITY ROW */
+        .city-row { display: flex; gap: 8px; align-items: stretch; }
+        .city-row select { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-weight: 600; }
+        .city-row input { flex: 1; }
+        .btn-plus { width: 50px; border-radius: 12px; background: #f1f5f9; border: 1px solid #cbd5e1; cursor: pointer; font-size: 20px; color: var(--dark); display:flex; align-items:center; justify-content:center; }
+        .btn-plus:active { background: #e2e8f0; }
+
         .slider-group { margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 16px; }
         input[type=range] { width: 100%; height: 10px; border-radius: 5px; -webkit-appearance: none; background: #cbd5e1; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 4px solid var(--dark); cursor: pointer; }
@@ -307,7 +310,8 @@
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
-            const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+            // MODIFICATION SCOPE : On ajoute drive.readonly pour voir le MP4 uploadé manuellement
+            const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
             const DB_NAME = "guide_michelin_sil_db_v41.json";
             let tokenClient, token;
 
@@ -331,6 +335,7 @@
             const handleAuth = () => { if(token){ if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').style.color='#64748b';} } else tokenClient.requestAccessToken(); };
 
             const findFile = async (name) => {
+                // Recherche générique (sans verif de dossier spécifique pour le moment pour simplifier)
                 const q = `name='${name}' and trashed=false`;
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
                 const d = await r.json();
@@ -393,6 +398,7 @@
             let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
             let isCreating=false, sortMode='score';
             
+            // IMAGES ALEATOIRES
             const IMAGES = [
                 "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
                 "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
@@ -401,7 +407,8 @@
                 "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
             ];
             
-            const getImage = (id) => IMAGES[id % IMAGES.length];
+            // Fonction pour avoir une image stable par resto
+            const getImage = (id) => IMAGES[parseInt(id) % IMAGES.length] || IMAGES[0];
 
             const init = async () => {
                 window.onerror = function(message, source, lineno, colno, error) { playVideo(); return true; };
@@ -423,7 +430,7 @@
                 const c = document.getElementById('video-container');
                 const v = document.getElementById('video-player');
                 if(v.src) { c.style.display = 'flex'; v.play(); }
-                else alert("Vidéo pas encore chargée ou introuvable");
+                else alert("Vidéo pas encore chargée ou introuvable (verifiez Drive)");
             };
 
             const initDB = () => new Promise(r => {
@@ -452,7 +459,7 @@
 
             const scan = async () => {
                 const b = map.getBounds().pad(0.2);
-                // TIMEOUT set to 90s to fix 504 Errors
+                // TIMEOUT 90s pour eviter 504
                 const q = `[out:json][timeout:90];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
                 document.getElementById('loader').classList.add('visible');
                 try {
@@ -520,7 +527,7 @@
                     <img src="${getImage(p.id)}">
                     <div>
                         <div class="card-title">${p.name}</div>
-                        <div class="card-addr">${p.city || "Ville inconnue"}</div>
+                        <div class="card-addr">${(p.city && p.city !== "Inconnu") ? p.city : ""}</div>
                         <div class="card-pills">
                             <span class="score-pill">${s==0?'Nouveau':s+'/10'}</span>
                             ${dateStr ? `<span class="date-pill">${dateStr}</span>` : ''}
@@ -532,8 +539,14 @@
             const select = (p, saved) => {
                 selectedPlace = saved||p;
                 map.flyTo([p.lat-0.002, p.lon], 16);
+                
                 document.getElementById('ban-title').innerText = p.name;
-                document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
+                // Correction Affichage Bandeau: VILLE - ADRESSE
+                let locTxt = "";
+                if(p.city && p.city !== "Inconnu") locTxt += p.city + " - ";
+                locTxt += p.addr || "";
+                document.getElementById('ban-sub').innerText = locTxt;
+                
                 document.getElementById('ban-img').src = getImage(p.id);
                 document.getElementById('banner').classList.add('active');
                 
@@ -554,14 +567,18 @@
                 
                 refreshCitiesDropdown();
                 const sel = document.getElementById('e-city-select');
-                const hasCity = p.city && Array.from(sel.options).some(o=>o.value===p.city);
                 
-                if(hasCity || !p.city) {
-                    toggleCityMode(true);
-                    sel.value = p.city || "";
+                // Si la liste est vide OU si la ville du lieu n'est pas dans la liste
+                // On passe en mode TEXTE par défaut
+                const hasOptions = sel.options.length > 1; // 1 because of default "Choisir..."
+                const cityInList = p.city && Array.from(sel.options).some(o=>o.value===p.city);
+                
+                if(!hasOptions || (p.city && !cityInList)) {
+                     toggleCityMode(false); // Mode Texte
+                     document.getElementById('e-city-custom').value = p.city || "";
                 } else {
-                    toggleCityMode(false);
-                    document.getElementById('e-city-custom').value = p.city;
+                    toggleCityMode(true); // Mode Liste
+                    sel.value = p.city || "";
                 }
 
                 const s = p.score || {qp:5, taste:5, vibe:5};
@@ -575,13 +592,17 @@
             const closeModal = () => document.getElementById('modal').classList.remove('open');
 
             const toggleCityMode = (isSelect) => {
+                // TRUE = Montrer la LISTE, Cacher le TEXTE
+                // FALSE = Cacher la LISTE, Montrer le TEXTE
                 document.getElementById('city-select-mode').style.display = isSelect ? 'flex' : 'none';
                 document.getElementById('city-text-mode').style.display = isSelect ? 'none' : 'flex';
-                if(!isSelect) document.getElementById('e-city-custom').focus();
+                if(!isSelect) {
+                    setTimeout(() => document.getElementById('e-city-custom').focus(), 100);
+                }
             };
 
             const refreshCitiesDropdown = () => {
-                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
+                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c && c!=="Inconnu"))].sort();
                 const sel = document.getElementById('e-city-select');
                 sel.innerHTML = '<option value="">Choisir une ville...</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
             };
@@ -608,10 +629,15 @@
             };
 
             const save = () => {
-                const isSelect = document.getElementById('city-select-mode').style.display !== 'none';
-                const cityVal = isSelect 
-                    ? document.getElementById('e-city-select').value 
-                    : document.getElementById('e-city-custom').value.trim();
+                // Récupération intelligente de la ville
+                const isSelectVisible = document.getElementById('city-select-mode').style.display !== 'none';
+                let cityVal = "";
+                
+                if(isSelectVisible) {
+                    cityVal = document.getElementById('e-city-select').value;
+                } else {
+                    cityVal = document.getElementById('e-city-custom').value.trim();
+                }
 
                 const u = {
                     ...selectedPlace,
@@ -632,7 +658,7 @@
                 
                 closeModal();
                 updateMap();
-                refreshCities();
+                refreshCities(); // Mettre à jour le filtre global
                 renderGlobalList();
                 select(u,u);
                 Drive.save(savedPlaces);
@@ -658,7 +684,7 @@
 
             // GLOBAL LIST & FILTER
             const refreshCities = () => {
-                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
+                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c && c!=="Inconnu"))].sort();
                 const s = document.getElementById('city-filter');
                 const old = s.value;
                 s.innerHTML = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
