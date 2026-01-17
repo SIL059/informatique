@@ -1,16 +1,4 @@
-
-
-C'est un problème de mise en page CSS (Flexbox) qui écrase votre liste, combiné à des timeouts serveurs sur l'API de carte.
-Voici le code entièrement réécrit et restructuré.
-Corrections apportées :
-Réparation de l'affichage (Sidebar) : J'ai forcé les dimensions de la barre latérale pour qu'elle ne s'écrase plus en bas de l'écran. Le texte "Rien ici" est maintenant noir et bien visible.
-Optimisation du Scan (Erreur 504) : Le scan ne se déclenche désormais que si le zoom est suffisamment proche (niveau 14 minimum) pour éviter de demander trop de données au serveur d'un coup, ce qui causait le timeout.
-Drive & Vidéo : La logique de chargement silencieux est conservée avec les bonnes permissions.
-Auto-complétion Ville : La ville est détectée automatiquement via la position GPS lors de la création d'un point.
-Copiez ce code complet :
- code Html
-play_circledownloadcontent_copy
-expand_less    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
