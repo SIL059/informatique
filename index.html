@@ -1,5 +1,4 @@
-
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +9,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
     
-    <title>Guide SIL - V43 Stable</title>
+    <title>Guide SIL - Nord Edition</title>
     
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,7 +113,7 @@
 
         /* MARKERS */
         .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
-        .pin-scan { width: 30px; height: 30px; border-radius: 50%; background: var(--scan-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* Points scannés supprimés, on garde que les SAVED */
         .pin-saved { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: white; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999 !important; animation: pulse-save 2s infinite; }
         .mk-gold { background: var(--c-gold); }
         .mk-high { background: #10b981; }
@@ -125,6 +124,8 @@
         /* CARNET */
         #view-list { background: var(--bg-sidebar); flex-direction: column; }
         .list-head-area { padding: 20px; background: white; border-bottom: 1px solid #e2e8f0; }
+        .city-filter-wrap { margin-top: 10px; }
+        #city-filter { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700; color: var(--dark); }
         .filter-row { display: flex; gap: 10px; overflow-x: auto; padding-top: 15px; }
         .f-chip { padding: 8px 16px; border-radius: 20px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 700; font-size: 12px; color: #64748b; cursor: pointer; white-space: nowrap; }
         .f-chip.active { background: var(--dark); color: white; border-color: var(--dark); }
@@ -195,8 +196,6 @@
         <div class="map-wrapper">
             <div id="map"></div>
             <div class="map-ui">
-                <div class="loader-wrap" id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i> Scan en cours...</div>
-                
                 <div class="fabs pointer-auto" id="main-ctrls">
                     <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
                 </div>
@@ -227,6 +226,9 @@
     <div class="app-view" id="view-list">
         <div class="list-head-area">
             <h1 style="margin:0; font-family:var(--font-display); font-size:28px">Mon Carnet</h1>
+            <div class="city-filter-wrap">
+                <select id="city-filter" onchange="App.renderGlobalList()"></select>
+            </div>
             <div class="filter-row">
                 <div class="f-chip active" onclick="App.setSort('score', this)">Par Note</div>
                 <div class="f-chip" onclick="App.setSort('date', this)">Récents</div>
@@ -248,7 +250,6 @@
             <div class="sheet-body">
                 <div class="inp-group"><input type="text" class="inp-std" id="e-name" placeholder="Nom du restaurant"></div>
                 
-                <!-- City & Address Auto-filled -->
                 <div class="inp-group">
                     <label style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:4px; display:block">Ville (Auto)</label>
                     <input type="text" class="inp-std locked" id="e-city" readonly>
@@ -389,7 +390,7 @@
 
         // --- APP LOGIC ---
         const App = (() => {
-            let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
+            let map, db, markers=[], savedPlaces=[], selectedPlace=null;
             let isCreating=false, sortMode='score';
             let currentSearchCity = "";
             
@@ -426,7 +427,7 @@
             };
 
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V42', 1);
+                const req = indexedDB.open('GuideSil_V45', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db=e.target.result; r(); };
             });
@@ -443,37 +444,19 @@
             });
 
             const initMap = () => {
-                map = L.map('map', {zoomControl:false, attributionControl:false}).setView([48.8566, 2.3522], 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20}).addTo(map);
-                map.on('moveend', () => { if(!isCreating && map.getZoom()>=15) scan(); }); // SCAN ZOOM 15+
-                setTimeout(scan, 2000);
+                // CENTRAGE NORD FRANCE
+                map = L.map('map', {zoomControl:false, attributionControl:false}).setView([50.5, 3.0], 9);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20, 
+                    minZoom: 8 // Empêche de dézoomer trop
+                }).addTo(map);
+                
+                // RESTRICTION ZONE (Nord / Pas de Calais / Belgique frontalière)
+                const bounds = [[49.5, 1.0], [51.5, 4.5]];
+                map.setMaxBounds(bounds);
             };
 
-            const scan = async () => {
-                if(map.getZoom() < 15) return; // Prevent scan if too far
-                const b = map.getBounds().pad(0.2);
-                // CHANGED SERVER TO LZ4 (FASTER)
-                const q = `[out:json][timeout:25];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
-                document.getElementById('loader').classList.add('visible');
-                try {
-                    const r = await fetch('https://lz4.overpass-api.de/api/interpreter', {method:'POST', body:q});
-                    if(!r.ok) throw new Error("Overpass Error");
-                    const d = await r.json();
-                    const newItems = d.elements.map(e=>({
-                        id: e.id, name: e.tags.name||"Inconnu",
-                        addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
-                        city: e.tags['addr:city'] || "Inconnu",
-                        type: e.tags.amenity||'restaurant', lat: e.lat, lon: e.lon
-                    }));
-                    let chg=false;
-                    newItems.forEach(i => {
-                        if(!savedPlaces.some(s=>s.id===i.id) && !scannedCache.some(c=>c.id===i.id)) { scannedCache.push(i); chg=true; }
-                    });
-                    if(scannedCache.length>150) scannedCache = scannedCache.slice(scannedCache.length-150);
-                    if(chg) updateMap();
-                } catch(e){ console.log("Scan silent fail"); }
-                document.getElementById('loader').classList.remove('visible');
-            };
+            // SCAN SUPPRIMÉ - UNIQUEMENT LES POINTS ENREGISTRÉS
 
             const updateMap = () => {
                 markers.forEach(m=>map.removeLayer(m.marker)); markers=[];
@@ -481,18 +464,13 @@
                 const visible = savedPlaces.filter(p => b.contains([p.lat, p.lon]));
                 renderSidebar(visible);
 
-                [...savedPlaces, ...scannedCache].forEach(p => {
-                    const saved = savedPlaces.find(s=>s.id===p.id);
-                    let html;
-                    if(saved) {
-                        const s = p.score?.total||0;
-                        let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
-                        let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
-                        html = `<div class="pin-saved ${cls}">${txt}</div>`;
-                    } else {
-                        html = `<div class="pin-scan"><i class="fa-solid fa-utensils"></i></div>`;
-                    }
-                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:saved?5000:0}).addTo(map);
+                savedPlaces.forEach(p => {
+                    const s = p.score?.total||0;
+                    let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
+                    let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
+                    let html = `<div class="pin-saved ${cls}">${txt}</div>`;
+                    
+                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
                     m.on('click', ()=>flyToPlace(p.id)); 
                     markers.push({marker:m});
                 });
@@ -693,7 +671,6 @@
                     document.getElementById('banner').classList.remove('active'); 
                     selectedPlace=null; 
                     map.setView([d[0].lat, d[0].lon], 14); 
-                    scannedCache=[];
                 }
                 renderGlobalList();
             };
