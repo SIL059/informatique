@@ -10,7 +10,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
     
-    <title>Guide SIL - V42 Auto-City</title>
+    <title>Guide SIL - V43 Stable</title>
     
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,7 +68,6 @@
         #easter-egg-trigger { cursor: pointer; transition: transform 0.2s; }
         #easter-egg-trigger:active { transform: scale(0.8) rotate(20deg); }
 
-        /* Bouton Drive avec animation si déconnecté */
         #drive-btn.needs-auth { animation: drive-attention 2s infinite; }
         #drive-btn.connected { color: #10b981 !important; animation: none; }
 
@@ -305,7 +304,6 @@
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
-            // MODIFICATION SCOPES: Ajout de drive.readonly pour voir les fichiers importés manuellement
             const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
             const DB_NAME = "guide_michelin_sil_db_v42.json";
             let tokenClient, token;
@@ -318,12 +316,9 @@
                         callback: async (resp) => {
                             if(resp.error) return App.toast("Erreur Auth");
                             token = resp.access_token;
-                            
-                            // UI update on success
                             const btn = document.getElementById('drive-btn');
                             btn.classList.remove('needs-auth');
                             btn.classList.add('connected');
-                            
                             App.toast("Drive Connecté");
                             await sync();
                             preloadVideo(); 
@@ -335,7 +330,6 @@
             const handleAuth = () => { if(token){ if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} } else tokenClient.requestAccessToken(); };
 
             const findFile = async (name) => {
-                // Search in all files (thanks to drive.readonly)
                 const q = `name='${name}' and trashed=false`;
                 const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
                 const d = await r.json();
@@ -451,16 +445,18 @@
             const initMap = () => {
                 map = L.map('map', {zoomControl:false, attributionControl:false}).setView([48.8566, 2.3522], 15);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20}).addTo(map);
-                map.on('moveend', () => { if(!isCreating && map.getZoom()>13) scan(); });
+                map.on('moveend', () => { if(!isCreating && map.getZoom()>=15) scan(); }); // SCAN ZOOM 15+
                 setTimeout(scan, 2000);
             };
 
             const scan = async () => {
+                if(map.getZoom() < 15) return; // Prevent scan if too far
                 const b = map.getBounds().pad(0.2);
-                const q = `[out:json][timeout:90];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
+                // CHANGED SERVER TO LZ4 (FASTER)
+                const q = `[out:json][timeout:25];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
                 document.getElementById('loader').classList.add('visible');
                 try {
-                    const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
+                    const r = await fetch('https://lz4.overpass-api.de/api/interpreter', {method:'POST', body:q});
                     if(!r.ok) throw new Error("Overpass Error");
                     const d = await r.json();
                     const newItems = d.elements.map(e=>({
@@ -497,7 +493,7 @@
                         html = `<div class="pin-scan"><i class="fa-solid fa-utensils"></i></div>`;
                     }
                     const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:saved?5000:0}).addTo(map);
-                    m.on('click', ()=>flyToPlace(p.id)); // CLICK -> FLY & EDIT
+                    m.on('click', ()=>flyToPlace(p.id)); 
                     markers.push({marker:m});
                 });
             };
@@ -506,7 +502,6 @@
                 const c = document.getElementById('sidebar-list');
                 list.sort((a,b)=>(b.score?.total||0)-(a.score?.total||0));
                 
-                // FILTERING BY SEARCH CITY if active
                 if(currentSearchCity) {
                     list = list.filter(p => p.city && p.city.toLowerCase().includes(currentSearchCity.toLowerCase()));
                 }
@@ -556,7 +551,6 @@
                 }
             };
 
-            // NEW: REVERSE GEOCODE FUNCTION
             const getAddressFromCoords = async (lat, lon) => {
                 try {
                     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
@@ -571,8 +565,6 @@
                 const p = selectedPlace;
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
-                
-                // AUTO FIELDS (Readonly)
                 document.getElementById('e-city').value = p.city || "";
                 document.getElementById('e-addr').value = p.addr || "";
 
@@ -611,7 +603,6 @@
                 const u = {
                     ...selectedPlace,
                     name: document.getElementById('e-name').value,
-                    // Keep auto-detected values
                     addr: document.getElementById('e-addr').value,
                     city: document.getElementById('e-city').value,
                     gmaps: document.getElementById('e-gmaps').value,
@@ -642,13 +633,11 @@
                 updateMap(); renderGlobalList(); Drive.save(savedPlaces);
             };
 
-            // CREATION MODE (Target Center)
             const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').style.display='block'; document.getElementById('creation-ui').classList.add('visible'); };
             const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').style.display='none'; document.getElementById('creation-ui').classList.remove('visible'); };
             const confirmCreation = async () => {
                 const c = map.getCenter();
                 toast("Localisation adresse...");
-                // CALL AUTO GEOCODE
                 const locData = await getAddressFromCoords(c.lat, c.lng);
                 
                 const newP = { 
@@ -666,14 +655,12 @@
                 openModal();
             };
 
-            // GLOBAL LIST & FILTER
             const setSort = (m, el) => { sortMode=m; document.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderGlobalList(); };
             
             const renderGlobalList = () => {
                 const c = document.getElementById('global-list');
                 
                 let d = [...savedPlaces];
-                // Apply Search Filter on List
                 if(currentSearchCity) {
                      d = d.filter(p => p.city && p.city.toLowerCase().includes(currentSearchCity.toLowerCase()));
                 }
@@ -698,10 +685,8 @@
             };
 
             const searchCity = async (v) => {
-                currentSearchCity = v.trim(); // Store for filter
+                currentSearchCity = v.trim();
                 if(v.length<3) return;
-                
-                // Move map
                 const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
                 const d = await r.json();
                 if(d.length) { 
@@ -710,7 +695,7 @@
                     map.setView([d[0].lat, d[0].lon], 14); 
                     scannedCache=[];
                 }
-                renderGlobalList(); // Update list
+                renderGlobalList();
             };
 
             const getData = () => new Promise(r=>r(savedPlaces));
@@ -722,15 +707,11 @@
                 else { document.getElementById('view-list').classList.add('active'); document.getElementById('nav-list').classList.add('active'); renderGlobalList(); }
             };
             
-            // UPDATED: FLY TO PLACE AND OPEN EDIT
             const flyToPlace = (id) => { 
                 const p=savedPlaces.find(x=>x.id===id); 
                 if(p){ 
                     switchTab('map'); 
-                    setTimeout(() => {
-                        select(p,p);
-                        openModal(); // DIRECT OPEN
-                    }, 300); 
+                    setTimeout(() => { select(p,p); openModal(); }, 300); 
                 } 
             };
             
