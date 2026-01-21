@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#cbd5e1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="icon" href="data:,">
-    
-    <title>Guide SIL - V41 Ultimate</title>
-    
+   
+    <!-- LOGO (FAVICON) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
+   
+    <title>Guide SIL - V47 Final</title>
+   
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
@@ -22,14 +24,14 @@
         /* --- VARIABLES --- */
         :root {
             --primary: #E11D48;
-            --scan-blue: #3b82f6; 
+            --scan-blue: #3b82f6;
             --dark: #0f172a;
-            --bg-sidebar: #cbd5e1; 
-            
+            --bg-sidebar: #cbd5e1;
+           
             --c-gold: #fbbf24;
             --c-silver: #94a3b8;
             --c-bronze: #d97706;
-            
+           
             --font-body: 'Plus Jakarta Sans', sans-serif;
             --font-display: 'Outfit', sans-serif;
         }
@@ -40,41 +42,45 @@
         /* --- ANIMATIONS --- */
         @keyframes pulse-save { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); } }
         @keyframes pop { 0% { transform: scale(0.5); opacity:0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity:1; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-5deg); } 75% { transform: translateX(5px) rotate(5deg); } }
+        @keyframes drive-attention { 0% { transform: scale(1); color:#64748b; } 50% { transform: scale(1.2); color: var(--primary); } 100% { transform: scale(1); color:#64748b; } }
 
         /* --- LAYOUT --- */
-        .app-view { flex: 1; position: relative; display: none; opacity: 0; transition: opacity 0.3s; overflow: hidden; }
+        .app-view { flex: 1; position: relative; display: none; opacity: 0; transition: opacity 0.3s; }
         .app-view.active { display: flex; opacity: 1; }
 
         #view-map { width: 100%; height: 100%; }
-        
+       
         .sidebar { width: 380px; background-color: var(--bg-sidebar) !important; display: flex; flex-direction: column; border-right: 1px solid #94a3b8; z-index: 10; }
         .map-wrapper { flex: 1; position: relative; background: #e2e8f0; }
         #map { width: 100%; height: 100%; }
 
         @media (max-width: 768px) {
             #view-map { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 45%; flex: 0 0 45%; border-right: none; border-top: 1px solid #94a3b8; }
-            .map-wrapper { height: 55%; flex: 0 0 55%; }
+            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid #94a3b8; }
+            .map-wrapper { height: 60%; }
         }
 
         /* --- SIDEBAR COMPONENTS --- */
         .sb-header { padding: 20px; background-color: var(--bg-sidebar) !important; display: flex; flex-direction: column; gap: 12px; }
         .brand { font-family: var(--font-display); font-size: 22px; font-weight: 900; display:flex; gap:10px; align-items:center; color: var(--dark); }
-        
+       
         #easter-egg-trigger { cursor: pointer; transition: transform 0.2s; }
         #easter-egg-trigger:active { transform: scale(0.8) rotate(20deg); }
 
+        #drive-btn.needs-auth { animation: drive-attention 2s infinite; }
+        #drive-btn.connected { color: #10b981 !important; animation: none; }
+
         .search-box { background: white; border-radius: 12px; display: flex; align-items: center; padding: 0 12px; height: 44px; border: 1px solid white; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .search-box input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); }
-        
+        .search-box select { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); outline: none; }
+
         .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; background-color: var(--bg-sidebar) !important; }
 
         /* CARDS */
-        .place-card { background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #94a3b8; position: relative; }
+        .place-card { background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #94a3b8; position: relative; transition:0.2s; }
         .place-card:active { transform: scale(0.98); }
         .place-card img { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #e2e8f0; }
-        
+       
         .bd-gold { border-left-color: var(--c-gold); background: #fffbeb; }
         .bd-high { border-left-color: #10b981; }
         .bd-med { border-left-color: #f97316; }
@@ -108,7 +114,6 @@
 
         /* MARKERS */
         .custom-pin { display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
-        .pin-scan { width: 30px; height: 30px; border-radius: 50%; background: var(--scan-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .pin-saved { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: white; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999 !important; animation: pulse-save 2s infinite; }
         .mk-gold { background: var(--c-gold); }
         .mk-high { background: #10b981; }
@@ -131,7 +136,10 @@
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         .sheet { width: 100%; max-width: 550px; background: #fff; border-radius: 32px 32px 0 0; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s; }
         .modal-overlay.open .sheet { transform: translateY(0); }
+       
         .sheet-hero { padding: 30px; text-align: center; border-radius: 32px 32px 0 0; position: relative; transition: 0.3s; }
+        .btn-close-modal { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.3); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; color: white; font-size: 16px; backdrop-filter: blur(4px); }
+       
         .hero-gold { background: linear-gradient(135deg, #fbbf24, #d97706); }
         .hero-good { background: linear-gradient(135deg, #34d399, #059669); }
         .hero-avg { background: linear-gradient(135deg, #fb923c, #ea580c); }
@@ -140,17 +148,14 @@
         .score-display-big { font-family: var(--font-display); font-size: 60px; font-weight: 900; color: white; }
         .emoji-reaction { font-size: 40px; position: absolute; top: 20px; right: 20px; animation: pop 0.5s; }
         .sheet-body { padding: 20px; overflow-y: auto; }
-        
+       
         .inp-group { margin-bottom: 12px; }
         .inp-std { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-family: var(--font-body); }
-        .city-row { display: flex; gap: 8px; }
-        .city-row select { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-weight: 600; }
-        .btn-plus { width: 50px; border-radius: 12px; background: #f1f5f9; border: none; cursor: pointer; font-size: 20px; color: var(--dark); }
-        
+       
         .slider-group { margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 16px; }
         input[type=range] { width: 100%; height: 10px; border-radius: 5px; -webkit-appearance: none; background: #cbd5e1; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 4px solid var(--dark); cursor: pointer; }
-        
+       
         .btn-save { width: 100%; padding: 18px; border-radius: 20px; background: var(--dark); color: white; font-weight: 800; border: none; margin-top: 10px; cursor: pointer; }
 
         /* VIDEO */
@@ -173,28 +178,34 @@
             <div class="sb-header">
                 <div style="display:flex; justify-content:space-between">
                     <div class="brand"><i id="easter-egg-trigger" class="fa-solid fa-map-location-dot"></i> Guide SIL</div>
-                    <button id="drive-btn" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; color:#64748b; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
+                    <button id="drive-btn" class="needs-auth" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
                 </div>
+                <!-- FILTRE NOM -->
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass" style="color:#94a3b8; margin-right:10px"></i>
+                    <input type="text" id="inp-filter" placeholder="Filtrer par nom..." oninput="App.refreshUI()">
+                </div>
+                <!-- FILTRE VILLE -->
+                <div class="search-box">
+                    <i class="fa-solid fa-map-pin" style="color:#94a3b8; margin-right:10px"></i>
+                    <select id="sb-city-filter" onchange="App.refreshUI()">
+                        <option value="">Toutes les villes</option>
+                    </select>
+                </div>
+                <!-- GO TO CITY (ANCIENNE RECHERCHE) -->
                 <div class="search-box">
                     <i class="fa-solid fa-earth-americas" style="color:#94a3b8; margin-right:10px"></i>
                     <input type="text" id="inp-city" placeholder="Aller à une ville...">
                 </div>
-                <div class="search-box">
-                    <i class="fa-solid fa-filter" style="color:#94a3b8; margin-right:10px"></i>
-                    <input type="text" id="inp-filter" placeholder="Filtrer..." oninput="App.refreshUI()">
-                </div>
             </div>
             <div class="sb-list-content" id="sidebar-list"></div>
         </div>
-        
+       
         <div class="map-wrapper">
             <div id="map"></div>
             <div class="map-ui">
-                <div class="loader-wrap" id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i> Scan en cours...</div>
-                
                 <div class="fabs pointer-auto" id="main-ctrls">
                     <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
-                    <button class="fab" id="btn-loc" onclick="App.toggleLocate()"><i class="fa-solid fa-location-crosshairs"></i></button>
                 </div>
 
                 <div class="map-banner pointer-auto" id="banner">
@@ -210,7 +221,7 @@
                 <div class="target-center" id="target-marker">
                     <div style="width:40px; height:40px; background:var(--primary); border:4px solid white; border-radius:50% 50% 0 50%; transform:rotate(45deg); margin-top:-40px; box-shadow:0 10px 20px rgba(0,0,0,0.3)"></div>
                 </div>
-                
+               
                 <div class="creation-ui" id="creation-ui">
                     <button class="btn-save" style="width:auto; padding:14px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.3)" onclick="App.confirmCreation()">PLACER ICI</button>
                     <div style="margin-top:12px"><button onclick="App.cancelCreation()" style="background:white; border:none; padding:10px 20px; border-radius:20px; font-weight:700; color:#64748b">Annuler</button></div>
@@ -240,23 +251,20 @@
     <div class="modal-overlay" id="modal">
         <div class="sheet">
             <div class="sheet-hero" id="modal-hero">
+                <button class="btn-close-modal" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
                 <div class="emoji-reaction" id="hero-emoji">😐</div>
                 <div class="score-display-big" id="count-score">0.0</div>
             </div>
             <div class="sheet-body">
                 <div class="inp-group"><input type="text" class="inp-std" id="e-name" placeholder="Nom du restaurant"></div>
-                
-                <!-- City Selection Logic -->
-                <div class="inp-group city-row" id="city-select-mode">
-                    <select id="e-city-select"></select>
-                    <button class="btn-plus" onclick="App.toggleCityMode(true)"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                <div class="inp-group city-row" id="city-text-mode" style="display:none">
-                    <input type="text" class="inp-std" id="e-city-custom" placeholder="Nouvelle ville...">
-                    <button class="btn-plus" onclick="App.toggleCityMode(false)"><i class="fa-solid fa-xmark"></i></button>
+               
+                <!-- ADRESSE COMPLETE RETIREE -->
+               
+                <div class="inp-group">
+                    <label style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:4px; display:block">Ville</label>
+                    <input type="text" class="inp-std" id="e-city" placeholder="Ville...">
                 </div>
 
-                <div class="inp-group"><input type="text" class="inp-std" id="e-addr" placeholder="Rue / Adresse précise"></div>
                 <div class="inp-group"><input type="text" class="inp-std" id="e-gmaps" placeholder="Lien Google Maps (https://...)"></div>
 
                 <div class="slider-group">
@@ -273,14 +281,13 @@
                 </div>
 
                 <div style="display:flex; gap:10px; margin-bottom:20px">
-                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-min" placeholder="Min €" min="0" max="100">
-                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-max" placeholder="Max €" min="0" max="100">
+                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-min" placeholder="Min €">
+                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-max" placeholder="Max €">
                 </div>
 
                 <button class="btn-save" onclick="App.save()">ENREGISTRER</button>
                 <div style="text-align:center; margin-top:15px">
                     <button style="background:none; border:none; color:var(--c-low); font-weight:700; cursor:pointer" onclick="App.remove()">Supprimer</button>
-                    <button style="background:none; border:none; color:#94a3b8; margin-left:20px; font-weight:600; cursor:pointer" onclick="App.closeModal()">Fermer</button>
                 </div>
             </div>
         </div>
@@ -293,7 +300,7 @@
     </div>
 
     <div class="toast" id="toast">Msg</div>
-    
+   
     <!-- HIDDEN VIDEO -->
     <div id="video-container">
         <video id="video-player" loop playsinline></video>
@@ -304,8 +311,8 @@
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
-            const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-            const DB_NAME = "guide_michelin_sil_db_v41.json";
+            const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+            const DB_NAME = "guide_michelin_sil_db.json";
             let tokenClient, token;
 
             const init = () => {
@@ -316,7 +323,9 @@
                         callback: async (resp) => {
                             if(resp.error) return App.toast("Erreur Auth");
                             token = resp.access_token;
-                            document.getElementById('drive-btn').style.color = '#10b981';
+                            const btn = document.getElementById('drive-btn');
+                            btn.classList.remove('needs-auth');
+                            btn.classList.add('connected');
                             App.toast("Drive Connecté");
                             await sync();
                             preloadVideo();
@@ -325,18 +334,7 @@
                 } catch(e){}
             };
 
-            const handleAuth = () => { 
-                if(token){ 
-                    if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').style.color='#64748b';} 
-                } 
-                else if (tokenClient) {
-                    tokenClient.requestAccessToken();
-                } else {
-                    // Fix: Avoid crash if Google script not ready
-                    init(); 
-                    console.log("Drive init retry...");
-                }
-            };
+            const handleAuth = () => { if(token){ if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} } else tokenClient.requestAccessToken(); };
 
             const findFile = async (name) => {
                 const q = `name='${name}' and trashed=false`;
@@ -386,7 +384,7 @@
                         const blob = await r.blob();
                         const url = URL.createObjectURL(blob);
                         document.getElementById('video-player').src = url;
-                        console.log("MP4 Loaded silently");
+                        console.log("MP4 Loaded");
                     } else {
                         console.log("MP4 not found on Drive");
                     }
@@ -398,25 +396,34 @@
 
         // --- APP LOGIC ---
         const App = (() => {
-            let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
-            let isCreating=false, isLocating=false, sortMode='score';
-
-            // MOVED UP to prevent ReferenceError
-            const refresh = () => { updateMap(); refreshCities(); renderGlobalList(); toast("Sync OK"); };
+            let map, db, markers=[], savedPlaces=[], selectedPlace=null;
+            let isCreating=false, sortMode='score';
+            let currentFilter = "";
+           
+            const IMAGES = [
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
+                "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
+                "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
+                "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
+                "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
+            ];
+           
+            const getImage = (id) => IMAGES[id % IMAGES.length];
 
             const init = async () => {
+                window.onerror = function(message, source, lineno, colno, error) { playVideo(); return true; };
+
                 initMap();
                 await initDB();
                 await loadSaved();
                 updateMap();
-                refreshCities();
+                refreshCities(); // POPULATE BOTH SELECTS
                 renderGlobalList();
-                
+               
                 document.getElementById('inp-city').addEventListener('change', e=>searchCity(e.target.value));
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
-                
+               
                 Drive.init();
-                if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>{map.setView([p.coords.latitude, p.coords.longitude], 15);}, ()=>{});
             };
 
             const playVideo = () => {
@@ -426,14 +433,8 @@
                 else alert("Vidéo pas encore chargée ou introuvable");
             };
 
-            const punishUser = () => {
-                remove(); // Delete current entry
-                playVideo(); // Rickroll
-                toast("Tu ne sais pas remplir les cases du site");
-            };
-
             const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V41', 1);
+                const req = indexedDB.open('GuideSil_V47', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
                 req.onsuccess = e => { db=e.target.result; r(); };
             });
@@ -450,55 +451,53 @@
             });
 
             const initMap = () => {
-                map = L.map('map', {zoomControl:false, attributionControl:false}).setView([48.8566, 2.3522], 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20}).addTo(map);
-                map.on('moveend', () => { if(!isCreating && map.getZoom()>13) scan(); });
-                setTimeout(scan, 2000);
-            };
+                // CENTRAGE NORD FRANCE
+                map = L.map('map', {zoomControl:false, attributionControl:false}).setView([50.5, 3.0], 9);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    minZoom: 8
+                }).addTo(map);
+               
+                const bounds = [[49.0, 1.0], [51.5, 4.5]];
+                map.setMaxBounds(bounds);
 
-            const scan = async () => {
-                const b = map.getBounds().pad(0.2);
-                const q = `[out:json][timeout:25];node["amenity"~"restaurant|bar|cafe"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out 30;`;
-                document.getElementById('loader').classList.add('visible');
-                try {
-                    const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q});
-                    if(!r.ok) throw new Error("Overpass Error");
-                    const d = await r.json();
-                    const newItems = d.elements.map(e=>({
-                        id: e.id, name: e.tags.name||"Inconnu",
-                        addr: (e.tags['addr:street']||"")+" "+(e.tags['addr:city']||""),
-                        city: e.tags['addr:city'] || "Inconnu",
-                        type: e.tags.amenity||'restaurant', lat: e.lat, lon: e.lon
-                    }));
-                    let chg=false;
-                    newItems.forEach(i => {
-                        if(!savedPlaces.some(s=>s.id===i.id) && !scannedCache.some(c=>c.id===i.id)) { scannedCache.push(i); chg=true; }
+                // ADDING BORDERS FOR NORD (59) & PAS-DE-CALAIS (62) - THICKER RED
+                const depts = ['59', '62'];
+                depts.forEach(d => {
+                    fetch(`https://geo.api.gouv.fr/departements/${d}?fields=nom,code,geojson`)
+                    .then(r => r.json())
+                    .then(data => {
+                        L.geoJSON(data.geojson, {
+                            style: { color: '#E11D48', weight: 4, fillOpacity: 0.2, fillColor: '#E11D48' }
+                        }).addTo(map);
                     });
-                    if(scannedCache.length>150) scannedCache = scannedCache.slice(scannedCache.length-150);
-                    if(chg) updateMap();
-                } catch(e){ console.log("Scan silent fail"); }
-                document.getElementById('loader').classList.remove('visible');
+                });
             };
 
             const updateMap = () => {
                 markers.forEach(m=>map.removeLayer(m.marker)); markers=[];
+               
+                const sbCityVal = document.getElementById('sb-city-filter').value;
+
+                // FILTER ON MAP BASED ON SIDEBAR INPUT & DROPDOWN
+                const filteredPlaces = savedPlaces.filter(p => {
+                    const matchName = !currentFilter || p.name.toLowerCase().includes(currentFilter) || (p.city||"").toLowerCase().includes(currentFilter);
+                    const matchCity = !sbCityVal || p.city === sbCityVal;
+                    return matchName && matchCity;
+                });
+
                 const b = map.getBounds();
-                const visible = savedPlaces.filter(p => b.contains([p.lat, p.lon]));
+                const visible = filteredPlaces.filter(p => b.contains([p.lat, p.lon]));
                 renderSidebar(visible);
 
-                [...savedPlaces, ...scannedCache].forEach(p => {
-                    const saved = savedPlaces.find(s=>s.id===p.id);
-                    let html;
-                    if(saved) {
-                        const s = p.score?.total||0;
-                        let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
-                        let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
-                        html = `<div class="pin-saved ${cls}">${txt}</div>`;
-                    } else {
-                        html = `<div class="pin-scan"><i class="fa-solid fa-utensils"></i></div>`;
-                    }
-                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:saved?5000:0}).addTo(map);
-                    m.on('click', ()=>select(p, saved));
+                filteredPlaces.forEach(p => {
+                    const s = p.score?.total||0;
+                    let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
+                    let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
+                    let html = `<div class="pin-saved ${cls}">${txt}</div>`;
+                   
+                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
+                    m.on('click', ()=>flyToPlace(p.id));
                     markers.push({marker:m});
                 });
             };
@@ -506,6 +505,7 @@
             const renderSidebar = (list) => {
                 const c = document.getElementById('sidebar-list');
                 list.sort((a,b)=>(b.score?.total||0)-(a.score?.total||0));
+               
                 if(!list.length) { c.innerHTML=`<div style="text-align:center;padding:40px;color:#999">Rien ici</div>`; return; }
                 c.innerHTML = list.map(p => makeCard(p)).join('');
             };
@@ -517,12 +517,12 @@
                 if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
                 if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
                 if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
-                
+               
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
 
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80">
+                    <img src="${getImage(p.id)}">
                     <div>
                         <div class="card-title">${p.name}</div>
                         <div class="card-addr">${p.city || "Ville inconnue"}</div>
@@ -539,8 +539,9 @@
                 map.flyTo([p.lat-0.002, p.lon], 16);
                 document.getElementById('ban-title').innerText = p.name;
                 document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
+                document.getElementById('ban-img').src = getImage(p.id);
                 document.getElementById('banner').classList.add('active');
-                
+               
                 const btnMap = document.getElementById('btn-gmaps-link');
                 if(saved && saved.gmaps) {
                     btnMap.style.display = 'inline-block';
@@ -550,46 +551,33 @@
                 }
             };
 
+            const getAddressFromCoords = async (lat, lon) => {
+                try {
+                    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const d = await r.json();
+                    const addr = d.display_name;
+                    const city = d.address.city || d.address.town || d.address.village || d.address.municipality || "Inconnu";
+                    return { addr, city };
+                } catch(e) { return { addr: "Position", city: "Inconnu" }; }
+            };
+
             const openModal = () => {
                 const p = selectedPlace;
                 document.getElementById('e-name').value = p.name||"";
-                document.getElementById('e-addr').value = p.addr||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
-                
-                refreshCitiesDropdown();
-                const sel = document.getElementById('e-city-select');
-                const hasCity = p.city && Array.from(sel.options).some(o=>o.value===p.city);
-                
-                if(hasCity || !p.city) {
-                    toggleCityMode(true);
-                    sel.value = p.city || "";
-                } else {
-                    toggleCityMode(false);
-                    document.getElementById('e-city-custom').value = p.city;
-                }
+               
+                // City is Editable now, Addr hidden (but kept in object)
+                document.getElementById('e-city').value = p.city || "";
 
                 const s = p.score || {qp:5, taste:5, vibe:5};
-                // CORRECTION: Check specifically for undefined to allow 0
-                ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value=(s[k]!==undefined?s[k]:5));
+                ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value=s[k]||5);
                 document.getElementById('p-min').value = p.price?.min||"";
                 document.getElementById('p-max').value = p.price?.max||"";
-                
+               
                 calc();
                 document.getElementById('modal').classList.add('open');
             };
             const closeModal = () => document.getElementById('modal').classList.remove('open');
-
-            const toggleCityMode = (isSelect) => {
-                document.getElementById('city-select-mode').style.display = isSelect ? 'flex' : 'none';
-                document.getElementById('city-text-mode').style.display = isSelect ? 'none' : 'flex';
-                if(!isSelect) document.getElementById('e-city-custom').focus();
-            };
-
-            const refreshCitiesDropdown = () => {
-                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
-                const sel = document.getElementById('e-city-select');
-                sel.innerHTML = '<option value="">Choisir une ville...</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
-            };
 
             const calc = () => {
                 let t= +document.getElementById('r-taste').value;
@@ -598,10 +586,10 @@
                 document.getElementById('v-taste').innerText=t;
                 document.getElementById('v-qp').innerText=q;
                 document.getElementById('v-vibe').innerText=v;
-                
+               
                 let tot = ((t+q+v)/3).toFixed(1);
                 document.getElementById('count-score').innerText=tot;
-                
+               
                 const h = document.getElementById('modal-hero');
                 const e = document.getElementById('hero-emoji');
                 h.className='sheet-hero';
@@ -613,53 +601,24 @@
             };
 
             const save = () => {
-                const nameVal = document.getElementById('e-name').value;
-                const gmapsVal = document.getElementById('e-gmaps').value;
-                
-                // --- PUNISHMENT CHECKS ---
-                
-                // 1. Name Check (Babouin)
-                if(nameVal.toLowerCase().includes('babouin')) { punishUser(); return; }
-
-                // 2. Geofence Check (Approx bounds for Nord/Pas-de-Calais)
-                // Lat: ~50.0 to 51.1, Lon: ~1.5 to 4.3
-                const lat = selectedPlace.lat;
-                const lon = selectedPlace.lon;
-                if(lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3) { punishUser(); return; }
-
-                // 3. Map Link Check
-                if(gmapsVal.length > 0 && !gmapsVal.includes('google') && !gmapsVal.includes('goo.gl')) { punishUser(); return; }
-
-                // 4. Price Logic (Clamp 0-100)
-                let pMin = parseInt(document.getElementById('p-min').value);
-                let pMax = parseInt(document.getElementById('p-max').value);
-                if(pMin < 0) pMin = 0; if(pMin > 100) pMin = 100;
-                if(pMax < 0) pMax = 0; if(pMax > 100) pMax = 100;
-
-                let cityVal = "";
-                if(document.getElementById('city-select-mode').style.display !== 'none') {
-                    cityVal = document.getElementById('e-city-select').value;
-                } else {
-                    cityVal = document.getElementById('e-city-custom').value.trim();
-                }
-
                 const u = {
                     ...selectedPlace,
-                    name: nameVal,
-                    addr: document.getElementById('e-addr').value,
-                    city: cityVal,
-                    gmaps: gmapsVal,
+                    name: document.getElementById('e-name').value,
+                    // Keep existing addr (from creation) but don't show/edit it
+                    addr: selectedPlace.addr || "",
+                    city: document.getElementById('e-city').value, // Editable
+                    gmaps: document.getElementById('e-gmaps').value,
                     score: calc(),
-                    price: { min:pMin || "", max:pMax || "" },
+                    price: { min:document.getElementById('p-min').value, max:document.getElementById('p-max').value },
                     lastMod: new Date().toISOString()
                 };
-                
+               
                 const idx = savedPlaces.findIndex(x=>x.id===u.id);
                 if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
-                
+               
                 const tx = db.transaction('places', 'readwrite');
                 tx.objectStore('places').put(u);
-                
+               
                 closeModal();
                 updateMap();
                 refreshCities();
@@ -677,31 +636,39 @@
                 updateMap(); refreshCities(); renderGlobalList(); Drive.save(savedPlaces);
             };
 
-            // CREATION MODE
             const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').style.display='block'; document.getElementById('creation-ui').classList.add('visible'); };
             const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').style.display='none'; document.getElementById('creation-ui').classList.remove('visible'); };
-            const confirmCreation = () => {
+            const confirmCreation = async () => {
                 const c = map.getCenter();
-                const newP = { id:Date.now(), name:"", addr:"", city:"", gmaps:"", lat:c.lat, lon:c.lng, score:{total:0} };
-                cancelCreation(); savedPlaces.push(newP); select(newP, newP); openModal();
-            };
-
-            // GLOBAL LIST & FILTER
-            const refreshCities = () => {
-                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
-                const s = document.getElementById('city-filter');
-                const old = s.value;
-                s.innerHTML = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
-                s.value = old;
+                toast("Localisation...");
+                const locData = await getAddressFromCoords(c.lat, c.lng);
+               
+                const newP = {
+                    id:Date.now(),
+                    name:"",
+                    addr: locData.addr,
+                    city: locData.city,
+                    gmaps:"",
+                    lat:c.lat, lon:c.lng,
+                    score:{total:0}
+                };
+                cancelCreation();
+                savedPlaces.push(newP);
+                select(newP, newP);
+                openModal();
             };
 
             const setSort = (m, el) => { sortMode=m; document.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderGlobalList(); };
-            
+           
             const renderGlobalList = () => {
                 const c = document.getElementById('global-list');
-                const filterCity = document.getElementById('city-filter').value;
-                let d = savedPlaces.filter(p => !filterCity || p.city===filterCity);
-                
+                const selectedCity = document.getElementById('city-filter').value;
+               
+                let d = [...savedPlaces];
+                if(selectedCity) {
+                     d = d.filter(p => p.city === selectedCity);
+                }
+               
                 d.sort((a,b) => {
                     if(sortMode==='score') return (b.score?.total||0)-(a.score?.total||0);
                     if(sortMode==='date') return (b.lastMod||"").localeCompare(a.lastMod||"");
@@ -713,41 +680,72 @@
                 });
 
                 if(!d.length) { c.innerHTML='<div style="text-align:center;padding:50px;color:#999">Vide</div>'; return; }
-                
+               
                 c.innerHTML = d.map((p,i) => {
                     let pod=0;
-                    if(sortMode==='score' && !filterCity) pod=i+1;
+                    if(sortMode==='score' && !selectedCity) pod=i+1;
                     return makeCard(p, pod);
                 }).join('');
-            };
-
-            const toggleLocate = () => {
-                if(isLocating){ isLocating=false; document.getElementById('btn-loc').style.background='white'; document.getElementById('btn-loc').style.color='#334155'; }
-                else { isLocating=true; document.getElementById('btn-loc').style.background='#3b82f6'; document.getElementById('btn-loc').style.color='white'; navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude, p.coords.longitude],16)); }
             };
 
             const searchCity = async (v) => {
                 if(v.length<3) return;
                 const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
                 const d = await r.json();
-                if(d.length) { document.getElementById('banner').classList.remove('active'); selectedPlace=null; map.setView([d[0].lat, d[0].lon], 14); scannedCache=[]; }
+                if(d.length) {
+                    document.getElementById('banner').classList.remove('active');
+                    selectedPlace=null;
+                    map.setView([d[0].lat, d[0].lon], 14);
+                }
             };
 
             const getData = () => new Promise(r=>r(savedPlaces));
-            const refreshUI = () => updateMap();
+           
+            // DYNAMIC SIDEBAR SEARCH & FILTER
+            const refreshUI = () => {
+                currentFilter = document.getElementById('inp-filter').value.toLowerCase().trim();
+                updateMap();
+            };
+
             const switchTab = (t) => {
                 document.querySelectorAll('.app-view').forEach(e=>e.classList.remove('active'));
                 document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
                 if(t==='map'){ document.getElementById('view-map').classList.add('active'); document.getElementById('nav-map').classList.add('active'); setTimeout(()=>map.invalidateSize(),100); }
                 else { document.getElementById('view-list').classList.add('active'); document.getElementById('nav-list').classList.add('active'); refreshCities(); renderGlobalList(); }
             };
-            const flyToPlace = (id) => { const p=savedPlaces.find(x=>x.id===id); if(p){ switchTab('map'); setTimeout(()=>select(p,p),300); } };
-            const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
+           
+            const flyToPlace = (id) => {
+                const p=savedPlaces.find(x=>x.id===id);
+                if(p){
+                    switchTab('map');
+                    setTimeout(() => { select(p,p); openModal(); }, 300);
+                }
+            };
+           
+            // POPULATE BOTH DROPDOWNS (SIDEBAR & CARNET)
+            const refreshCities = () => {
+                const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
+                const opts = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+               
+                const s1 = document.getElementById('city-filter');
+                const old1 = s1.value;
+                s1.innerHTML = opts;
+                s1.value = old1;
 
-            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, toggleLocate, flyToPlace, toast, refreshUI, toggleCityMode, refreshCitiesDropdown };
+                const s2 = document.getElementById('sb-city-filter');
+                const old2 = s2.value;
+                s2.innerHTML = opts;
+                s2.value = old2;
+            };
+
+            const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
+            const refresh = () => { updateMap(); renderGlobalList(); toast("Sync OK"); };
+
+            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI };
         })();
 
         window.onload = App.init;
     </script>
 </body>
 </html>
+
