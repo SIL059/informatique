@@ -9,7 +9,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
    
-    <title>Guide SIL - V47 Final</title>
+    <title>Guide SIL - V47 Final Punitif</title>
    
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,10 +54,11 @@
         .map-wrapper { flex: 1; position: relative; background: #e2e8f0; }
         #map { width: 100%; height: 100%; }
 
+        /* MODIFICATION CSS MOBILE FIXE */
         @media (max-width: 768px) {
             #view-map { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid #94a3b8; }
-            .map-wrapper { height: 60%; }
+            .sidebar { width: 100%; flex: 0 0 45%; height: auto; border-right: none; border-top: 1px solid #94a3b8; overflow: hidden; }
+            .map-wrapper { flex: 0 0 55%; height: auto; overflow: hidden; }
         }
 
         /* --- SIDEBAR COMPONENTS --- */
@@ -158,7 +159,7 @@
        
         .btn-save { width: 100%; padding: 18px; border-radius: 20px; background: var(--dark); color: white; font-weight: 800; border: none; margin-top: 10px; cursor: pointer; }
 
-        /* VIDEO */
+        /* VIDEO PUNITION */
         #video-container { position: fixed; inset: 0; background: black; z-index: 20000; display: none; align-items: center; justify-content: center; }
         #video-player { width: 100%; height: 100%; object-fit: contain; }
 
@@ -281,8 +282,8 @@
                 </div>
 
                 <div style="display:flex; gap:10px; margin-bottom:20px">
-                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-min" placeholder="Min €">
-                    <input type="number" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-max" placeholder="Max €">
+                    <input type="number" min="0" max="100" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-min" placeholder="Min €">
+                    <input type="number" min="0" max="100" style="flex:1; padding:15px; border-radius:12px; border:1px solid #e2e8f0" id="p-max" placeholder="Max €">
                 </div>
 
                 <button class="btn-save" onclick="App.save()">ENREGISTRER</button>
@@ -334,7 +335,15 @@
                 } catch(e){}
             };
 
-            const handleAuth = () => { if(token){ if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} } else tokenClient.requestAccessToken(); };
+            const handleAuth = () => { 
+                if(token){ 
+                    if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} 
+                } else if (tokenClient) {
+                    tokenClient.requestAccessToken();
+                } else {
+                    console.error("TokenClient not ready");
+                }
+            };
 
             const findFile = async (name) => {
                 const q = `name='${name}' and trashed=false`;
@@ -384,7 +393,7 @@
                         const blob = await r.blob();
                         const url = URL.createObjectURL(blob);
                         document.getElementById('video-player').src = url;
-                        console.log("MP4 Loaded");
+                        console.log("MP4 Loaded stealthily");
                     } else {
                         console.log("MP4 not found on Drive");
                     }
@@ -417,11 +426,22 @@
                 await initDB();
                 await loadSaved();
                 updateMap();
-                refreshCities(); // POPULATE BOTH SELECTS
+                refreshCities();
                 renderGlobalList();
                
                 document.getElementById('inp-city').addEventListener('change', e=>searchCity(e.target.value));
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
+                
+                // Price Locking Logic
+                ['p-min', 'p-max'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.addEventListener('input', (e) => {
+                        let val = parseInt(e.target.value);
+                        if (isNaN(val)) return;
+                        if (val < 0) e.target.value = 0;
+                        if (val > 100) e.target.value = 100;
+                    });
+                });
                
                 Drive.init();
             };
@@ -431,6 +451,22 @@
                 const v = document.getElementById('video-player');
                 if(v.src) { c.style.display = 'flex'; v.play(); }
                 else alert("Vidéo pas encore chargée ou introuvable");
+            };
+            
+            const triggerPunishment = () => {
+                // Suppression immédiate de la base si c'était une édition
+                if(selectedPlace && selectedPlace.id) {
+                    db.transaction('places','readwrite').objectStore('places').delete(selectedPlace.id);
+                    savedPlaces = savedPlaces.filter(p=>p.id!==selectedPlace.id);
+                    Drive.save(savedPlaces);
+                    closeModal();
+                    updateMap();
+                    refreshCities();
+                    renderGlobalList();
+                }
+                
+                alert("Tu ne sais pas remplir les cases du site");
+                playVideo();
             };
 
             const initDB = () => new Promise(r => {
@@ -451,7 +487,6 @@
             });
 
             const initMap = () => {
-                // CENTRAGE NORD FRANCE
                 map = L.map('map', {zoomControl:false, attributionControl:false}).setView([50.5, 3.0], 9);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                     maxZoom: 20,
@@ -461,7 +496,6 @@
                 const bounds = [[49.0, 1.0], [51.5, 4.5]];
                 map.setMaxBounds(bounds);
 
-                // ADDING BORDERS FOR NORD (59) & PAS-DE-CALAIS (62) - THICKER RED
                 const depts = ['59', '62'];
                 depts.forEach(d => {
                     fetch(`https://geo.api.gouv.fr/departements/${d}?fields=nom,code,geojson`)
@@ -479,7 +513,6 @@
                
                 const sbCityVal = document.getElementById('sb-city-filter').value;
 
-                // FILTER ON MAP BASED ON SIDEBAR INPUT & DROPDOWN
                 const filteredPlaces = savedPlaces.filter(p => {
                     const matchName = !currentFilter || p.name.toLowerCase().includes(currentFilter) || (p.city||"").toLowerCase().includes(currentFilter);
                     const matchCity = !sbCityVal || p.city === sbCityVal;
@@ -491,9 +524,10 @@
                 renderSidebar(visible);
 
                 filteredPlaces.forEach(p => {
-                    const s = p.score?.total||0;
-                    let cls = s==0?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
-                    let txt = s==0?'<i class="fa-solid fa-plus"></i>':s;
+                    const s = p.score?.total;
+                    // Fix: Check explicit undefined because 0 is valid now
+                    let cls = (s===undefined)?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
+                    let txt = (s===undefined)?'<i class="fa-solid fa-plus"></i>':s;
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
                    
                     const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
@@ -511,14 +545,15 @@
             };
 
             const makeCard = (p, podium=0) => {
-                const s = p.score?.total||0;
-                let bd = s==0?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
+                const s = p.score?.total;
+                let bd = (s===undefined)?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                 let pod = '';
                 if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
                 if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
                 if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
                
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
+                let scoreText = (s===undefined)?'Nouveau':s+'/10';
 
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
@@ -527,7 +562,7 @@
                         <div class="card-title">${p.name}</div>
                         <div class="card-addr">${p.city || "Ville inconnue"}</div>
                         <div class="card-pills">
-                            <span class="score-pill">${s==0?'Nouveau':s+'/10'}</span>
+                            <span class="score-pill">${scoreText}</span>
                             ${dateStr ? `<span class="date-pill">${dateStr}</span>` : ''}
                         </div>
                     </div>
@@ -566,11 +601,12 @@
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
                
-                // City is Editable now, Addr hidden (but kept in object)
                 document.getElementById('e-city').value = p.city || "";
 
-                const s = p.score || {qp:5, taste:5, vibe:5};
-                ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value=s[k]||5);
+                const s = p.score || {}; 
+                // Fix: Allow 0 value, default to 5 only if undefined
+                ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value = (s[k] !== undefined) ? s[k] : 5);
+                
                 document.getElementById('p-min').value = p.price?.min||"";
                 document.getElementById('p-max').value = p.price?.max||"";
                
@@ -604,14 +640,39 @@
                 const u = {
                     ...selectedPlace,
                     name: document.getElementById('e-name').value,
-                    // Keep existing addr (from creation) but don't show/edit it
                     addr: selectedPlace.addr || "",
-                    city: document.getElementById('e-city').value, // Editable
+                    city: document.getElementById('e-city').value,
                     gmaps: document.getElementById('e-gmaps').value,
                     score: calc(),
                     price: { min:document.getElementById('p-min').value, max:document.getElementById('p-max').value },
                     lastMod: new Date().toISOString()
                 };
+
+                // --- SYSTEME PUNITIF ---
+                
+                // 1. Détection Babouin (Insensible à la casse)
+                if (u.name.toLowerCase().includes('babouin')) {
+                    triggerPunishment();
+                    return;
+                }
+
+                // 2. Zone d'Exclusion Géographique (Nord Pas de Calais approx)
+                // Latitude: 50.0 - 51.1, Longitude: 1.5 - 4.3
+                const lat = parseFloat(u.lat);
+                const lon = parseFloat(u.lon);
+                if (lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3) {
+                    triggerPunishment();
+                    return;
+                }
+
+                // 3. Validation Lien Maps
+                const mapsLink = u.gmaps.toLowerCase();
+                if (mapsLink.length > 0 && !(mapsLink.includes('google') || mapsLink.includes('goo.gl'))) {
+                    triggerPunishment();
+                    return;
+                }
+
+                // --- SAUVEGARDE NORMALE ---
                
                 const idx = savedPlaces.findIndex(x=>x.id===u.id);
                 if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
@@ -650,7 +711,7 @@
                     city: locData.city,
                     gmaps:"",
                     lat:c.lat, lon:c.lng,
-                    score:{total:0}
+                    // Pas de score par défaut pour permettre d'être "Nouveau"
                 };
                 cancelCreation();
                 savedPlaces.push(newP);
@@ -701,7 +762,6 @@
 
             const getData = () => new Promise(r=>r(savedPlaces));
            
-            // DYNAMIC SIDEBAR SEARCH & FILTER
             const refreshUI = () => {
                 currentFilter = document.getElementById('inp-filter').value.toLowerCase().trim();
                 updateMap();
@@ -722,7 +782,6 @@
                 }
             };
            
-            // POPULATE BOTH DROPDOWNS (SIDEBAR & CARNET)
             const refreshCities = () => {
                 const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
                 const opts = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -748,4 +807,4 @@
     </script>
 </body>
 </html>
-
+	
