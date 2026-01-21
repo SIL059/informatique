@@ -43,7 +43,6 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-5deg); } 75% { transform: translateX(5px) rotate(5deg); } }
 
         /* --- LAYOUT --- */
-        /* Ajout de overflow:hidden pour empêcher le débordement qui pousse la nav */
         .app-view { flex: 1; position: relative; display: none; opacity: 0; transition: opacity 0.3s; overflow: hidden; }
         .app-view.active { display: flex; opacity: 1; }
 
@@ -55,7 +54,6 @@
 
         @media (max-width: 768px) {
             #view-map { flex-direction: column-reverse; }
-            /* CORRECTION BUG BANDEAU: Somme des hauteurs = 100% exactement */
             .sidebar { width: 100%; height: 45%; flex: 0 0 45%; border-right: none; border-top: 1px solid #94a3b8; }
             .map-wrapper { height: 55%; flex: 0 0 55%; }
         }
@@ -327,7 +325,18 @@
                 } catch(e){}
             };
 
-            const handleAuth = () => { if(token){ if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').style.color='#64748b';} } else tokenClient.requestAccessToken(); };
+            const handleAuth = () => { 
+                if(token){ 
+                    if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').style.color='#64748b';} 
+                } 
+                else if (tokenClient) {
+                    tokenClient.requestAccessToken();
+                } else {
+                    // Fix: Avoid crash if Google script not ready
+                    init(); 
+                    console.log("Drive init retry...");
+                }
+            };
 
             const findFile = async (name) => {
                 const q = `name='${name}' and trashed=false`;
@@ -391,6 +400,9 @@
         const App = (() => {
             let map, db, markers=[], savedPlaces=[], scannedCache=[], selectedPlace=null;
             let isCreating=false, isLocating=false, sortMode='score';
+
+            // MOVED UP to prevent ReferenceError
+            const refresh = () => { updateMap(); refreshCities(); renderGlobalList(); toast("Sync OK"); };
 
             const init = async () => {
                 initMap();
