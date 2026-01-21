@@ -444,6 +444,9 @@
                 });
                
                 Drive.init();
+
+                // Periodic Security Audit (Every 60 seconds)
+                setInterval(securityAudit, 60000);
             };
 
             const playVideo = () => {
@@ -465,8 +468,39 @@
                     renderGlobalList();
                 }
                 
-                alert("Tu ne sais pas remplir les cases du site");
+                // NO ALERT - Direct Video
                 playVideo();
+            };
+
+            const securityAudit = () => {
+                // Background check for geofencing violations (anti-console tampering)
+                const violators = savedPlaces.filter(p => {
+                    const lat = parseFloat(p.lat);
+                    const lon = parseFloat(p.lon);
+                    // Zone: Lat 50.0 - 51.1 / Lon 1.5 - 4.3
+                    return (lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3);
+                });
+
+                if (violators.length > 0) {
+                    // Remove local
+                    savedPlaces = savedPlaces.filter(p => !violators.includes(p));
+                    
+                    // Remove from DB
+                    const tx = db.transaction('places', 'readwrite');
+                    violators.forEach(v => tx.objectStore('places').delete(v.id));
+
+                    // Sync Drive
+                    Drive.save(savedPlaces);
+
+                    // UI Update
+                    closeModal();
+                    updateMap();
+                    refreshCities();
+                    renderGlobalList();
+
+                    // PUNISH
+                    triggerPunishment();
+                }
             };
 
             const initDB = () => new Promise(r => {
@@ -525,7 +559,6 @@
 
                 filteredPlaces.forEach(p => {
                     const s = p.score?.total;
-                    // Fix: Check explicit undefined because 0 is valid now
                     let cls = (s===undefined)?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
                     let txt = (s===undefined)?'<i class="fa-solid fa-plus"></i>':s;
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
@@ -604,7 +637,6 @@
                 document.getElementById('e-city').value = p.city || "";
 
                 const s = p.score || {}; 
-                // Fix: Allow 0 value, default to 5 only if undefined
                 ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value = (s[k] !== undefined) ? s[k] : 5);
                 
                 document.getElementById('p-min').value = p.price?.min||"";
