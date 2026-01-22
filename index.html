@@ -9,7 +9,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
    
-    <title>Guide SIL</title>
+    <title>Guide SIL - V47 Secure</title>
    
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,11 +50,10 @@
 
         #view-map { width: 100%; height: 100%; }
        
-        .sidebar { width: 380px; background-color: var(--bg-sidebar) !important; display: flex; flex-direction: column; border-right: 1px solid #94a3b8; z-index: 10; img src=https://www.monde-animal.fr/wp-content/uploads/2020/09/babouin-chacma-papio-ursinus-739x1024.jpg"}
+        .sidebar { width: 380px; background-color: var(--bg-sidebar) !important; display: flex; flex-direction: column; border-right: 1px solid #94a3b8; z-index: 10; }
         .map-wrapper { flex: 1; position: relative; background: #e2e8f0; }
         #map { width: 100%; height: 100%; }
 
-        /* MODIFICATION CSS MOBILE FIXE */
         @media (max-width: 768px) {
             #view-map { flex-direction: column-reverse; }
             .sidebar { width: 100%; flex: 0 0 45%; height: auto; border-right: none; border-top: 1px solid #94a3b8; overflow: hidden; }
@@ -75,7 +74,7 @@
         .search-box input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); }
         .search-box select { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); outline: none; }
 
-        .sb-list-content { flex: 1; /*overflow-y: auto*/; padding: 16px; background-color: var(--bg-sidebar) !important; }
+        .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; background-color: var(--bg-sidebar) !important; }
 
         /* CARDS */
         .place-card { background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #94a3b8; position: relative; transition:0.2s; }
@@ -102,9 +101,6 @@
         .fabs { position: absolute; bottom: 100px; right: 20px; display: flex; flex-direction: column; gap: 14px; }
         .fab { width: 56px; height: 56px; background: white; border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #334155; cursor: pointer; border: none; transition: 0.3s; }
         .fab-primary { background: var(--primary); color: white; }
-
-        .loader-wrap { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: white; color: var(--dark); padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 700; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; opacity: 0; transition: 0.3s; }
-        .loader-wrap.visible { opacity: 1; top: 30px; }
 
         .map-banner { position: absolute; bottom: 100px; left: 20px; right: 90px; max-width: 400px; background: white; padding: 12px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 14px; transform: translateY(200%); transition: 0.4s; }
         .map-banner.active { transform: translateY(0); }
@@ -193,7 +189,7 @@
                         <option value="">Toutes les villes</option>
                     </select>
                 </div>
-                <!-- GO TO CITY (ANCIENNE RECHERCHE) -->
+                <!-- GO TO CITY -->
                 <div class="search-box">
                     <i class="fa-solid fa-earth-americas" style="color:#94a3b8; margin-right:10px"></i>
                     <input type="text" id="inp-city" placeholder="Aller à une ville...">
@@ -259,8 +255,6 @@
             <div class="sheet-body">
                 <div class="inp-group"><input type="text" class="inp-std" id="e-name" placeholder="Nom du restaurant"></div>
                
-                <!-- ADRESSE COMPLETE RETIREE -->
-               
                 <div class="inp-group">
                     <label style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:4px; display:block">Ville</label>
                     <input type="text" class="inp-std" id="e-city" placeholder="Ville...">
@@ -304,7 +298,7 @@
    
     <!-- HIDDEN VIDEO -->
     <div id="video-container">
-        <img src="https://i.redd.it/jloiatrj24yd1.gif"/>
+        <video id="video-player" loop playsinline></video>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -419,6 +413,38 @@
            
             const getImage = (id) => IMAGES[id % IMAGES.length];
 
+            // --- SECURITY UTILS ---
+            const escapeHTML = (str) => {
+                if (!str) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            };
+
+            const checkRateLimit = () => {
+                const now = Date.now();
+                const ONE_HOUR = 3600000;
+                let logs = JSON.parse(localStorage.getItem('sil_creation_logs') || "[]");
+                logs = logs.filter(ts => now - ts < ONE_HOUR);
+                if (logs.length >= 5) {
+                    alert("Sécurité : Limite de 5 restaurants par heure atteinte.");
+                    return false;
+                }
+                return true;
+            };
+
+            const logCreation = () => {
+                const now = Date.now();
+                let logs = JSON.parse(localStorage.getItem('sil_creation_logs') || "[]");
+                logs = logs.filter(ts => now - ts < 3600000);
+                logs.push(now);
+                localStorage.setItem('sil_creation_logs', JSON.stringify(logs));
+            };
+            // ----------------------
+
             const init = async () => {
                 window.onerror = function(message, source, lineno, colno, error) { playVideo(); return true; };
 
@@ -432,7 +458,6 @@
                 document.getElementById('inp-city').addEventListener('change', e=>searchCity(e.target.value));
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
                 
-                // Price Locking Logic
                 ['p-min', 'p-max'].forEach(id => {
                     const el = document.getElementById(id);
                     el.addEventListener('input', (e) => {
@@ -444,9 +469,7 @@
                 });
                
                 Drive.init();
-
-                // Periodic Security Audit (Every 60 seconds)
-                setInterval(securityAudit, 45000);
+                setInterval(securityAudit, 60000);
             };
 
             const playVideo = () => {
@@ -457,7 +480,6 @@
             };
             
             const triggerPunishment = () => {
-                // Suppression immédiate de la base si c'était une édition
                 if(selectedPlace && selectedPlace.id) {
                     db.transaction('places','readwrite').objectStore('places').delete(selectedPlace.id);
                     savedPlaces = savedPlaces.filter(p=>p.id!==selectedPlace.id);
@@ -467,38 +489,25 @@
                     refreshCities();
                     renderGlobalList();
                 }
-                
-                // NO ALERT - Direct Video
                 playVideo();
             };
 
             const securityAudit = () => {
-                // Background check for geofencing violations (anti-console tampering)
                 const violators = savedPlaces.filter(p => {
                     const lat = parseFloat(p.lat);
                     const lon = parseFloat(p.lon);
-                    // Zone: Lat 50.0 - 51.1 / Lon 1.5 - 4.3
                     return (lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3);
                 });
 
                 if (violators.length > 0) {
-                    // Remove local
                     savedPlaces = savedPlaces.filter(p => !violators.includes(p));
-                    
-                    // Remove from DB
                     const tx = db.transaction('places', 'readwrite');
                     violators.forEach(v => tx.objectStore('places').delete(v.id));
-
-                    // Sync Drive
                     Drive.save(savedPlaces);
-
-                    // UI Update
                     closeModal();
                     updateMap();
                     refreshCities();
                     renderGlobalList();
-
-                    // PUNISH
                     triggerPunishment();
                 }
             };
@@ -561,6 +570,7 @@
                     const s = p.score?.total;
                     let cls = (s===undefined)?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
                     let txt = (s===undefined)?'<i class="fa-solid fa-plus"></i>':s;
+                    // Note: Here txt is either a safe number or a static icon HTML. No user input.
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
                    
                     const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
@@ -588,12 +598,16 @@
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
                 let scoreText = (s===undefined)?'Nouveau':s+'/10';
 
+                // SECURITY: Escape user inputs before inserting into HTML
+                const safeName = escapeHTML(p.name);
+                const safeCity = escapeHTML(p.city || "Ville inconnue");
+
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
                     <img src="${getImage(p.id)}">
                     <div>
-                        <div class="card-title">${p.name}</div>
-                        <div class="card-addr">${p.city || "Ville inconnue"}</div>
+                        <div class="card-title">${safeName}</div>
+                        <div class="card-addr">${safeCity}</div>
                         <div class="card-pills">
                             <span class="score-pill">${scoreText}</span>
                             ${dateStr ? `<span class="date-pill">${dateStr}</span>` : ''}
@@ -605,13 +619,15 @@
             const select = (p, saved) => {
                 selectedPlace = saved||p;
                 map.flyTo([p.lat-0.002, p.lon], 16);
+                
+                // SECURITY: innerText handles escaping automatically
                 document.getElementById('ban-title').innerText = p.name;
                 document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
                 document.getElementById('ban-img').src = getImage(p.id);
                 document.getElementById('banner').classList.add('active');
                
                 const btnMap = document.getElementById('btn-gmaps-link');
-                if(saved && saved.gmaps) {
+                if(saved && saved.gmaps && (saved.gmaps.startsWith('http') || saved.gmaps.includes('google'))) {
                     btnMap.style.display = 'inline-block';
                     btnMap.onclick = () => window.open(saved.gmaps, '_blank');
                 } else {
@@ -633,7 +649,6 @@
                 const p = selectedPlace;
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
-               
                 document.getElementById('e-city').value = p.city || "";
 
                 const s = p.score || {}; 
@@ -680,16 +695,13 @@
                     lastMod: new Date().toISOString()
                 };
 
-                // --- SYSTEME PUNITIF ---
+                // --- SYSTEME PUNITIF & SECURITY ---
                 
-                // 1. Détection Babouin (Insensible à la casse)
                 if (u.name.toLowerCase().includes('babouin')) {
                     triggerPunishment();
                     return;
                 }
 
-                // 2. Zone d'Exclusion Géographique (Nord Pas de Calais approx)
-                // Latitude: 50.0 - 51.1, Longitude: 1.5 - 4.3
                 const lat = parseFloat(u.lat);
                 const lon = parseFloat(u.lon);
                 if (lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3) {
@@ -697,14 +709,13 @@
                     return;
                 }
 
-                // 3. Validation Lien Maps
                 const mapsLink = u.gmaps.toLowerCase();
                 if (mapsLink.length > 0 && !(mapsLink.includes('google') || mapsLink.includes('goo.gl'))) {
                     triggerPunishment();
                     return;
                 }
 
-                // --- SAUVEGARDE NORMALE ---
+                // --- SAVE ---
                
                 const idx = savedPlaces.findIndex(x=>x.id===u.id);
                 if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
@@ -729,9 +740,25 @@
                 updateMap(); refreshCities(); renderGlobalList(); Drive.save(savedPlaces);
             };
 
-            const startCreation = () => { isCreating=true; document.getElementById('main-ctrls').style.display='none'; document.getElementById('banner').classList.remove('active'); document.getElementById('target-marker').style.display='block'; document.getElementById('creation-ui').classList.add('visible'); };
-            const cancelCreation = () => { isCreating=false; document.getElementById('main-ctrls').style.display='flex'; document.getElementById('target-marker').style.display='none'; document.getElementById('creation-ui').classList.remove('visible'); };
+            const startCreation = () => { 
+                isCreating=true; 
+                document.getElementById('main-ctrls').style.display='none'; 
+                document.getElementById('banner').classList.remove('active'); 
+                document.getElementById('target-marker').style.display='block'; 
+                document.getElementById('creation-ui').classList.add('visible'); 
+            };
+            
+            const cancelCreation = () => { 
+                isCreating=false; 
+                document.getElementById('main-ctrls').style.display='flex'; 
+                document.getElementById('target-marker').style.display='none'; 
+                document.getElementById('creation-ui').classList.remove('visible'); 
+            };
+
             const confirmCreation = async () => {
+                // SECURITY: Rate Limit Check
+                if (!checkRateLimit()) return;
+
                 const c = map.getCenter();
                 toast("Localisation...");
                 const locData = await getAddressFromCoords(c.lat, c.lng);
@@ -743,8 +770,11 @@
                     city: locData.city,
                     gmaps:"",
                     lat:c.lat, lon:c.lng,
-                    // Pas de score par défaut pour permettre d'être "Nouveau"
                 };
+                
+                // SECURITY: Log the creation timestamp
+                logCreation();
+
                 cancelCreation();
                 savedPlaces.push(newP);
                 select(newP, newP);
@@ -783,7 +813,8 @@
 
             const searchCity = async (v) => {
                 if(v.length<3) return;
-                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}&limit=1`);
+                // Encode URI component to prevent injection in URL parameters
+                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v)}&limit=1`);
                 const d = await r.json();
                 if(d.length) {
                     document.getElementById('banner').classList.remove('active');
@@ -816,7 +847,8 @@
            
             const refreshCities = () => {
                 const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
-                const opts = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+                // SECURITY: Escape city names in options
+                const opts = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
                
                 const s1 = document.getElementById('city-filter');
                 const old1 = s1.value;
@@ -839,4 +871,3 @@
     </script>
 </body>
 </html>
-	
