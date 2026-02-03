@@ -9,7 +9,7 @@
     <!-- LOGO (FAVICON) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
    
-    <title>Guide SIL </title>
+    <title>Guide SIL</title>
    
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -271,7 +271,7 @@
                     <input type="range" min="0" max="10" step="0.5" id="r-qp" oninput="App.calc()">
                 </div>
                 <div class="slider-group">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Qauntité</span><span id="v-vibe">5</span></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Quantité</span><span id="v-vibe">5</span></div>
                     <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()">
                 </div>
 
@@ -306,6 +306,7 @@
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
+            // Note: scope drive.file means we can only edit files created by THIS specific app ID
             const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
             const DB_NAME = "guide_michelin_sil_db.json";
             let tokenClient, token;
@@ -316,7 +317,7 @@
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID, scope: SCOPES, prompt: 'select_account',
                         callback: async (resp) => {
-                            if(resp.error) return App.toast("Erreur Auth");
+                            if(resp.error) return App.toast("Erreur Auth: " + resp.error);
                             token = resp.access_token;
                             const btn = document.getElementById('drive-btn');
                             btn.classList.remove('needs-auth');
@@ -326,34 +327,49 @@
                             preloadVideo();
                         }
                     });
-                } catch(e){}
+                } catch(e){ console.error("GSI Error", e); }
             };
 
-            const handleAuth = () => { 
-                if(token){ 
-                    if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} 
+            const handleAuth = () => {
+                // If token exists but might be expired, we still let user re-click to refresh
+                if(token){
+                    if(confirm("Déconnexion / Changer de compte ?")){
+                        token=null; 
+                        document.getElementById('drive-btn').classList.remove('connected'); 
+                        document.getElementById('drive-btn').classList.add('needs-auth');
+                        // Force prompt on next click
+                        if (tokenClient) tokenClient.requestAccessToken();
+                    }
                 } else if (tokenClient) {
                     tokenClient.requestAccessToken();
                 } else {
                     console.error("TokenClient not ready");
+                    App.toast("Service Google non chargé");
                 }
             };
 
             const findFile = async (name) => {
+                // Ensure we find files not in trash
                 const q = `name='${name}' and trashed=false`;
-                const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
-                const d = await r.json();
-                return (d.files && d.files.length) ? d.files[0].id : null;
+                try {
+                    const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${token}` } });
+                    if (!r.ok) throw new Error(r.status);
+                    const d = await r.json();
+                    return (d.files && d.files.length) ? d.files[0].id : null;
+                } catch(e) { console.error("FindFile Error", e); return null; }
             };
 
             const getDbId = async () => {
                 let id = await findFile(DB_NAME);
                 if(id) return id;
+                // If not found, create it
                 const meta = { name: DB_NAME, mimeType: 'application/json' };
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
                 form.append('file', new Blob([JSON.stringify([])], {type:'application/json'}));
+                
                 const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+                if(!r.ok) return null;
                 return (await r.json()).id;
             };
 
@@ -361,21 +377,43 @@
                 if(!token) return;
                 try {
                     const id = await getDbId();
+                    if (!id) throw new Error("Impossible de créer/trouver le fichier DB");
+                    
                     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
+                    if (r.status === 403) { App.toast("Accès refusé (403)"); return; }
+                    
                     const driveData = await r.json();
                     const local = await App.getData();
                     let chg = false;
                     driveData.forEach(d => { if(!local.find(l=>l.id===d.id)){ local.push(d); chg=true; } });
                     if(chg){ await App.saveAll(local); App.refresh(); }
-                } catch(e){ console.log("Sync error or new file"); }
+                } catch(e){ console.log("Sync error (new file or perm)", e); }
             };
 
             const save = async (data) => {
-                if(!token) return;
+                if(!token) { App.toast("Non connecté Drive"); return; }
                 try {
                     const id = await getDbId();
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                } catch(e){}
+                    if (!id) { App.toast("Erreur ID Fichier"); return; }
+                    
+                    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { 
+                        method: 'PATCH', 
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(data) 
+                    });
+                    
+                    if (!r.ok) {
+                        if (r.status === 403 || r.status === 401) {
+                            App.toast("Session expirée. Reconnexion...");
+                            token = null;
+                            document.getElementById('drive-btn').classList.remove('connected');
+                            document.getElementById('drive-btn').classList.add('needs-auth');
+                        } else {
+                            console.error("Drive Save Error", r.status, r.statusText);
+                            App.toast("Erreur sauvegarde: " + r.status);
+                        }
+                    }
+                } catch(e){ console.error("Save Exception", e); }
             };
 
             const preloadVideo = async () => {
@@ -384,10 +422,12 @@
                     const vidId = await findFile('rickroll.mp4');
                     if(vidId) {
                         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${vidId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
-                        const blob = await r.blob();
-                        const url = URL.createObjectURL(blob);
-                        document.getElementById('video-player').src = url;
-                        console.log("MP4 Loaded stealthily");
+                        if(r.ok) {
+                            const blob = await r.blob();
+                            const url = URL.createObjectURL(blob);
+                            document.getElementById('video-player').src = url;
+                            console.log("MP4 Loaded stealthily");
+                        }
                     } else {
                         console.log("MP4 not found on Drive");
                     }
@@ -446,7 +486,12 @@
             // ----------------------
 
             const init = async () => {
-                window.onerror = function(message, source, lineno, colno, error) { playVideo(); return true; };
+                // Modified to allow debugging while keeping the punishment mechanic
+                window.onerror = function(message, source, lineno, colno, error) { 
+                    console.error("Global Error Caught:", message);
+                    playVideo(); 
+                    return false; // False allows the error to show in console
+                };
 
                 initMap();
                 await initDB();
@@ -457,7 +502,7 @@
                
                 document.getElementById('inp-city').addEventListener('change', e=>searchCity(e.target.value));
                 document.getElementById('easter-egg-trigger').addEventListener('dblclick', playVideo);
-                
+               
                 ['p-min', 'p-max'].forEach(id => {
                     const el = document.getElementById(id);
                     el.addEventListener('input', (e) => {
@@ -475,58 +520,23 @@
             const playVideo = () => {
                 const c = document.getElementById('video-container');
                 const v = document.getElementById('video-player');
-                if(v.src) { c.style.display = 'flex'; v.play(); }
-                else alert("Vidéo pas encore chargée ou introuvable");
-            };
-            
-            const triggerPunishment = () => {
-                if(selectedPlace && selectedPlace.id) {
-                    db.transaction('places','readwrite').objectStore('places').delete(selectedPlace.id);
-                    savedPlaces = savedPlaces.filter(p=>p.id!==selectedPlace.id);
-                    Drive.save(savedPlaces);
-                    closeModal();
-                    updateMap();
-                    refreshCities();
-                    renderGlobalList();
-                }
-                playVideo();
-            };
-
-            const securityAudit = () => {
-                const violators = savedPlaces.filter(p => {
-                    const lat = parseFloat(p.lat);
-                    const lon = parseFloat(p.lon);
-                    return (lat < 50.0 || lat > 51.1 || lon < 1.5 || lon > 4.3);
-                });
-
-                if (violators.length > 0) {
-                    savedPlaces = savedPlaces.filter(p => !violators.includes(p));
-                    const tx = db.transaction('places', 'readwrite');
-                    violators.forEach(v => tx.objectStore('places').delete(v.id));
-                    Drive.save(savedPlaces);
-                    closeModal();
-                    updateMap();
-                    refreshCities();
-                    renderGlobalList();
-                    triggerPunishment();
-                }
-            };
-
-            const initDB = () => new Promise(r => {
-                const req = indexedDB.open('GuideSil_V47', 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore('places', {keyPath: 'id'});
-                req.onsuccess = e => { db=e.target.result; r(); };
+                if(v.src) { c.style.display = 'flex'; v.play().catch(e=>console.log("Autoplay blocked")); }
+                else console.log("Vidéo pas encore chargée ou introuvable");
+                req.onerror = e => { console.error("DB Error", e); r(); };
             });
 
             const loadSaved = () => new Promise(r => {
                 if(!db) return r();
-                db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => { savedPlaces = e.target.result||[]; r(); };
+                const tx = db.transaction('places', 'readonly');
+                tx.objectStore('places').getAll().onsuccess = e => { savedPlaces = e.target.result||[]; r(); };
+                tx.onerror = () => r();
             });
 
             const saveAll = (data) => new Promise(r => {
                 const tx = db.transaction('places', 'readwrite');
                 data.forEach(d => tx.objectStore('places').put(d));
                 tx.oncomplete = () => { savedPlaces=data; r(); };
+                tx.onerror = () => r();
             });
 
             const initMap = () => {
@@ -547,7 +557,7 @@
                         L.geoJSON(data.geojson, {
                             style: { color: '#E11D48', weight: 4, fillOpacity: 0.2, fillColor: '#E11D48' }
                         }).addTo(map);
-                    });
+                    }).catch(e => console.log("GeoJSON Error", e));
                 });
             };
 
@@ -570,7 +580,6 @@
                     const s = p.score?.total;
                     let cls = (s===undefined)?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
                     let txt = (s===undefined)?'<i class="fa-solid fa-plus"></i>':s;
-                    // Note: Here txt is either a safe number or a static icon HTML. No user input.
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
                    
                     const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
@@ -598,7 +607,6 @@
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
                 let scoreText = (s===undefined)?'Nouveau':s+'/10';
 
-                // SECURITY: Escape user inputs before inserting into HTML
                 const safeName = escapeHTML(p.name);
                 const safeCity = escapeHTML(p.city || "Ville inconnue");
 
@@ -619,9 +627,8 @@
             const select = (p, saved) => {
                 selectedPlace = saved||p;
                 map.flyTo([p.lat-0.002, p.lon], 16);
-                
-                // SECURITY: innerText handles escaping automatically
-                document.getElementById('ban-title').innerText = p.name;
+               
+                document.getElementById('ban-title').innerText = p.name || "Nouveau lieu";
                 document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
                 document.getElementById('ban-img').src = getImage(p.id);
                 document.getElementById('banner').classList.add('active');
@@ -651,9 +658,9 @@
                 document.getElementById('e-gmaps').value = p.gmaps||"";
                 document.getElementById('e-city').value = p.city || "";
 
-                const s = p.score || {}; 
+                const s = p.score || {};
                 ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value = (s[k] !== undefined) ? s[k] : 5);
-                
+               
                 document.getElementById('p-min').value = p.price?.min||"";
                 document.getElementById('p-max').value = p.price?.max||"";
                
@@ -696,7 +703,7 @@
                 };
 
                 // --- SYSTEME PUNITIF & SECURITY ---
-                
+               
                 if (u.name.toLowerCase().includes('babouin')) {
                     triggerPunishment();
                     return;
@@ -740,19 +747,19 @@
                 updateMap(); refreshCities(); renderGlobalList(); Drive.save(savedPlaces);
             };
 
-            const startCreation = () => { 
-                isCreating=true; 
-                document.getElementById('main-ctrls').style.display='none'; 
-                document.getElementById('banner').classList.remove('active'); 
-                document.getElementById('target-marker').style.display='block'; 
-                document.getElementById('creation-ui').classList.add('visible'); 
+            const startCreation = () => {
+                isCreating=true;
+                document.getElementById('main-ctrls').style.display='none';
+                document.getElementById('banner').classList.remove('active');
+                document.getElementById('target-marker').style.display='block';
+                document.getElementById('creation-ui').classList.add('visible');
             };
-            
-            const cancelCreation = () => { 
-                isCreating=false; 
-                document.getElementById('main-ctrls').style.display='flex'; 
-                document.getElementById('target-marker').style.display='none'; 
-                document.getElementById('creation-ui').classList.remove('visible'); 
+           
+            const cancelCreation = () => {
+                isCreating=false;
+                document.getElementById('main-ctrls').style.display='flex';
+                document.getElementById('target-marker').style.display='none';
+                document.getElementById('creation-ui').classList.remove('visible');
             };
 
             const confirmCreation = async () => {
@@ -771,7 +778,7 @@
                     gmaps:"",
                     lat:c.lat, lon:c.lng,
                 };
-                
+               
                 // SECURITY: Log the creation timestamp
                 logCreation();
 
@@ -795,7 +802,7 @@
                 d.sort((a,b) => {
                     if(sortMode==='score') return (b.score?.total||0)-(a.score?.total||0);
                     if(sortMode==='date') return (b.lastMod||"").localeCompare(a.lastMod||"");
-                    if(sortMode==='name') return a.name.localeCompare(b.name);
+                    if(sortMode==='name') return (a.name||"").localeCompare(b.name||"");
                     if(sortMode==='dist') {
                         const ct = map.getCenter();
                         return map.distance(ct,[a.lat,a.lon]) - map.distance(ct,[b.lat,b.lon]);
@@ -813,14 +820,15 @@
 
             const searchCity = async (v) => {
                 if(v.length<3) return;
-                // Encode URI component to prevent injection in URL parameters
-                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v)}&limit=1`);
-                const d = await r.json();
-                if(d.length) {
-                    document.getElementById('banner').classList.remove('active');
-                    selectedPlace=null;
-                    map.setView([d[0].lat, d[0].lon], 14);
-                }
+                try {
+                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v)}&limit=1`);
+                    const d = await r.json();
+                    if(d.length) {
+                        document.getElementById('banner').classList.remove('active');
+                        selectedPlace=null;
+                        map.setView([d[0].lat, d[0].lon], 14);
+                    }
+                } catch(e) { console.error("Search error", e); }
             };
 
             const getData = () => new Promise(r=>r(savedPlaces));
@@ -847,7 +855,6 @@
            
             const refreshCities = () => {
                 const cities = [...new Set(savedPlaces.map(p=>p.city).filter(c=>c))].sort();
-                // SECURITY: Escape city names in options
                 const opts = '<option value="">Toutes les villes</option>' + cities.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
                
                 const s1 = document.getElementById('city-filter');
@@ -864,7 +871,7 @@
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
             const refresh = () => { updateMap(); renderGlobalList(); toast("Sync OK"); };
 
-            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI };
+            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI, handleAuth };
         })();
 
         window.onload = App.init;
