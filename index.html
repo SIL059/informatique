@@ -444,12 +444,31 @@
 
             const init = () => {
                 if(typeof google === 'undefined') { setTimeout(init, 500); return; }
+                
+                // Restaurer le token depuis localStorage
+                const savedToken = localStorage.getItem('drive_token');
+                const savedExpiry = localStorage.getItem('drive_token_expiry');
+                
+                if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry)) {
+                    token = savedToken;
+                    const btn = document.getElementById('drive-btn');
+                    btn.classList.remove('needs-auth');
+                    btn.classList.add('connected');
+                    sync();
+                    preloadVideo();
+                }
+                
                 try {
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID, scope: SCOPES, prompt: 'select_account',
                         callback: async (resp) => {
                             if(resp.error) return App.toast("Erreur Auth");
                             token = resp.access_token;
+                            
+                            // Sauvegarder le token (expiration après 1 heure)
+                            localStorage.setItem('drive_token', token);
+                            localStorage.setItem('drive_token_expiry', (Date.now() + 3600000).toString());
+                            
                             const btn = document.getElementById('drive-btn');
                             btn.classList.remove('needs-auth');
                             btn.classList.add('connected');
@@ -463,7 +482,13 @@
 
             const handleAuth = () => { 
                 if(token){ 
-                    if(confirm("Déconnexion?")){token=null; document.getElementById('drive-btn').classList.remove('connected'); document.getElementById('drive-btn').classList.add('needs-auth');} 
+                    if(confirm("Déconnexion?")){
+                        token=null; 
+                        localStorage.removeItem('drive_token');
+                        localStorage.removeItem('drive_token_expiry');
+                        document.getElementById('drive-btn').classList.remove('connected'); 
+                        document.getElementById('drive-btn').classList.add('needs-auth');
+                    } 
                 } else if (tokenClient) {
                     tokenClient.requestAccessToken();
                 } else {
@@ -523,23 +548,12 @@
             const preloadVideo = async () => {
                 if(!token) return;
                 try {
-                    // Vérifier le cache vidéo
-                    const cachedVideo = CacheManager.getCache('rickroll_video');
-                    if (cachedVideo) {
-                        document.getElementById('video-player').src = cachedVideo;
-                        console.log("MP4 Loaded from cache");
-                        return;
-                    }
-
                     const vidId = await findFile('rickroll.mp4');
                     if(vidId) {
                         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${vidId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
                         const blob = await r.blob();
                         const url = URL.createObjectURL(blob);
                         document.getElementById('video-player').src = url;
-                        
-                        // Mettre en cache l'URL de la vidéo
-                        CacheManager.setCache('rickroll_video', url, CacheManager.IMAGE_CACHE_DURATION);
                         console.log("MP4 Loaded stealthily");
                     } else {
                         console.log("MP4 not found on Drive");
@@ -752,9 +766,8 @@
                     return matchName && matchCity;
                 });
 
-                const b = map.getBounds();
-                const visible = filteredPlaces.filter(p => b.contains([p.lat, p.lon]));
-                renderSidebar(visible);
+                // Afficher tous les restaurants filtrés dans la sidebar (pas seulement ceux visibles sur la carte)
+                renderSidebar(filteredPlaces);
 
                 filteredPlaces.forEach(p => {
                     const s = p.score?.total;
@@ -1122,4 +1135,4 @@
         window.onload = App.init;
     </script>
 </body>
-                                                                                                                     </html>
+        </html>
