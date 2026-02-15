@@ -155,6 +155,33 @@
        
         .btn-save { width: 100%; padding: 18px; border-radius: 20px; background: var(--dark); color: white; font-weight: 800; border: none; margin-top: 10px; cursor: pointer; }
 
+        /* NOUVEAU : TYPE DE RESTAURANT AVEC CASES ARRONDIES */
+        .type-selector { margin-bottom: 20px; }
+        .type-selector-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; display: block; }
+        .type-options { display: flex; flex-wrap: wrap; gap: 8px; }
+        .type-option { position: relative; }
+        .type-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .type-option label { 
+            display: inline-block; 
+            padding: 10px 18px; 
+            border-radius: 25px; 
+            background: #f8fafc; 
+            border: 2px solid #e2e8f0; 
+            font-weight: 700; 
+            font-size: 13px; 
+            color: #64748b; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .type-option input[type="radio"]:checked + label { 
+            background: var(--dark); 
+            color: white; 
+            border-color: var(--dark); 
+            transform: scale(1.05);
+        }
+        .type-option label:active { transform: scale(0.95); }
+
         /* VIDEO PUNITION */
         #video-container { position: fixed; inset: 0; background: black; z-index: 20000; display: none; align-items: center; justify-content: center; }
         #video-player { width: 100%; height: 100%; object-fit: contain; }
@@ -260,6 +287,33 @@
                     <input type="text" class="inp-std" id="e-city" placeholder="Ville...">
                 </div>
 
+                <!-- NOUVEAU : SÉLECTEUR DE TYPE -->
+                <div class="inp-group type-selector">
+                    <label class="type-selector-label">Type d'établissement</label>
+                    <div class="type-options">
+                        <div class="type-option">
+                            <input type="radio" name="place-type" id="type-restaurant" value="restaurant" checked>
+                            <label for="type-restaurant">🍽️ Restaurant</label>
+                        </div>
+                        <div class="type-option">
+                            <input type="radio" name="place-type" id="type-bar" value="bar">
+                            <label for="type-bar">🍺 Bar</label>
+                        </div>
+                        <div class="type-option">
+                            <input type="radio" name="place-type" id="type-fastfood" value="fast-food">
+                            <label for="type-fastfood">🍔 Fast-food</label>
+                        </div>
+                        <div class="type-option">
+                            <input type="radio" name="place-type" id="type-boulangerie" value="boulangerie">
+                            <label for="type-boulangerie">🥖 Boulangerie</label>
+                        </div>
+                        <div class="type-option">
+                            <input type="radio" name="place-type" id="type-pizzeria" value="pizzeria">
+                            <label for="type-pizzeria">🍕 Pizzeria</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="inp-group"><input type="text" class="inp-std" id="e-gmaps" placeholder="Lien Google Maps (https://...)"></div>
 
                 <div class="slider-group">
@@ -303,6 +357,84 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // --- CACHE MANAGER ---
+        const CacheManager = (() => {
+            const CACHE_PREFIX = 'guideSil_';
+            const CACHE_VERSION = 'v1_';
+            const IMAGE_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours
+            const DATA_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 heures
+
+            const getCacheKey = (key) => CACHE_PREFIX + CACHE_VERSION + key;
+
+            const setCache = (key, value, duration = DATA_CACHE_DURATION) => {
+                try {
+                    const item = {
+                        value: value,
+                        timestamp: Date.now(),
+                        duration: duration
+                    };
+                    localStorage.setItem(getCacheKey(key), JSON.stringify(item));
+                } catch(e) {
+                    console.warn('Cache write failed:', e);
+                }
+            };
+
+            const getCache = (key) => {
+                try {
+                    const cached = localStorage.getItem(getCacheKey(key));
+                    if (!cached) return null;
+                    
+                    const item = JSON.parse(cached);
+                    const now = Date.now();
+                    
+                    if (now - item.timestamp > item.duration) {
+                        localStorage.removeItem(getCacheKey(key));
+                        return null;
+                    }
+                    
+                    return item.value;
+                } catch(e) {
+                    console.warn('Cache read failed:', e);
+                    return null;
+                }
+            };
+
+            const clearCache = () => {
+                try {
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith(CACHE_PREFIX)) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                } catch(e) {
+                    console.warn('Cache clear failed:', e);
+                }
+            };
+
+            const clearOldCache = () => {
+                try {
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith(CACHE_PREFIX)) {
+                            const cached = localStorage.getItem(key);
+                            if (cached) {
+                                const item = JSON.parse(cached);
+                                if (Date.now() - item.timestamp > item.duration) {
+                                    localStorage.removeItem(key);
+                                }
+                            }
+                        }
+                    });
+                } catch(e) {
+                    console.warn('Old cache clear failed:', e);
+                }
+            };
+
+            // Nettoyer le cache au démarrage
+            clearOldCache();
+
+            return { setCache, getCache, clearCache, IMAGE_CACHE_DURATION };
+        })();
+
         // --- GOOGLE DRIVE ---
         const Drive = (() => {
             const CLIENT_ID = "588180980452-0pparhgbk0vn7enus4kdo6ifqv61teaf.apps.googleusercontent.com";
@@ -360,9 +492,16 @@
             const sync = async () => {
                 if(!token) return;
                 try {
+                    // Vérifier le cache d'abord
+                    const cached = CacheManager.getCache('drive_data');
+                    
                     const id = await getDbId();
                     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
                     const driveData = await r.json();
+                    
+                    // Mettre en cache les données Drive
+                    CacheManager.setCache('drive_data', driveData);
+                    
                     const local = await App.getData();
                     let chg = false;
                     driveData.forEach(d => { if(!local.find(l=>l.id===d.id)){ local.push(d); chg=true; } });
@@ -375,18 +514,32 @@
                 try {
                     const id = await getDbId();
                     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                    
+                    // Mettre à jour le cache
+                    CacheManager.setCache('drive_data', data);
                 } catch(e){}
             };
 
             const preloadVideo = async () => {
                 if(!token) return;
                 try {
+                    // Vérifier le cache vidéo
+                    const cachedVideo = CacheManager.getCache('rickroll_video');
+                    if (cachedVideo) {
+                        document.getElementById('video-player').src = cachedVideo;
+                        console.log("MP4 Loaded from cache");
+                        return;
+                    }
+
                     const vidId = await findFile('rickroll.mp4');
                     if(vidId) {
                         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${vidId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
                         const blob = await r.blob();
                         const url = URL.createObjectURL(blob);
                         document.getElementById('video-player').src = url;
+                        
+                        // Mettre en cache l'URL de la vidéo
+                        CacheManager.setCache('rickroll_video', url, CacheManager.IMAGE_CACHE_DURATION);
                         console.log("MP4 Loaded stealthily");
                     } else {
                         console.log("MP4 not found on Drive");
@@ -411,7 +564,16 @@
                 "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
             ];
            
-            const getImage = (id) => IMAGES[id % IMAGES.length];
+            const getImage = (id) => {
+                // Vérifier le cache d'image
+                const cacheKey = `img_${id}`;
+                const cached = CacheManager.getCache(cacheKey);
+                if (cached) return cached;
+                
+                const img = IMAGES[id % IMAGES.length];
+                CacheManager.setCache(cacheKey, img, CacheManager.IMAGE_CACHE_DURATION);
+                return img;
+            };
 
             // --- SECURITY UTILS ---
             const escapeHTML = (str) => {
@@ -520,13 +682,30 @@
 
             const loadSaved = () => new Promise(r => {
                 if(!db) return r();
-                db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => { savedPlaces = e.target.result||[]; r(); };
+                
+                // Vérifier le cache local d'abord
+                const cached = CacheManager.getCache('local_places');
+                if (cached && Array.isArray(cached)) {
+                    savedPlaces = cached;
+                }
+                
+                db.transaction('places', 'readonly').objectStore('places').getAll().onsuccess = e => { 
+                    savedPlaces = e.target.result||[]; 
+                    // Mettre en cache les données locales
+                    CacheManager.setCache('local_places', savedPlaces);
+                    r(); 
+                };
             });
 
             const saveAll = (data) => new Promise(r => {
                 const tx = db.transaction('places', 'readwrite');
                 data.forEach(d => tx.objectStore('places').put(d));
-                tx.oncomplete = () => { savedPlaces=data; r(); };
+                tx.oncomplete = () => { 
+                    savedPlaces=data; 
+                    // Mettre en cache
+                    CacheManager.setCache('local_places', savedPlaces);
+                    r(); 
+                };
             });
 
             const initMap = () => {
@@ -541,13 +720,24 @@
 
                 const depts = ['59', '62'];
                 depts.forEach(d => {
-                    fetch(`https://geo.api.gouv.fr/departements/${d}?fields=nom,code,geojson`)
-                    .then(r => r.json())
-                    .then(data => {
-                        L.geoJSON(data.geojson, {
+                    // Vérifier le cache pour les données géographiques
+                    const cacheKey = `geo_${d}`;
+                    const cached = CacheManager.getCache(cacheKey);
+                    
+                    if (cached) {
+                        L.geoJSON(cached, {
                             style: { color: '#E11D48', weight: 4, fillOpacity: 0.2, fillColor: '#E11D48' }
                         }).addTo(map);
-                    });
+                    } else {
+                        fetch(`https://geo.api.gouv.fr/departements/${d}?fields=nom,code,geojson`)
+                        .then(r => r.json())
+                        .then(data => {
+                            CacheManager.setCache(cacheKey, data.geojson, 30 * 24 * 60 * 60 * 1000); // 30 jours
+                            L.geoJSON(data.geojson, {
+                                style: { color: '#E11D48', weight: 4, fillOpacity: 0.2, fillColor: '#E11D48' }
+                            }).addTo(map);
+                        });
+                    }
                 });
             };
 
@@ -637,11 +827,20 @@
 
             const getAddressFromCoords = async (lat, lon) => {
                 try {
+                    // Vérifier le cache pour les adresses
+                    const cacheKey = `addr_${lat.toFixed(4)}_${lon.toFixed(4)}`;
+                    const cached = CacheManager.getCache(cacheKey);
+                    if (cached) return cached;
+
                     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                     const d = await r.json();
                     const addr = d.display_name;
                     const city = d.address.city || d.address.town || d.address.village || d.address.municipality || "Inconnu";
-                    return { addr, city };
+                    const result = { addr, city };
+                    
+                    // Mettre en cache l'adresse
+                    CacheManager.setCache(cacheKey, result);
+                    return result;
                 } catch(e) { return { addr: "Position", city: "Inconnu" }; }
             };
 
@@ -650,6 +849,15 @@
                 document.getElementById('e-name').value = p.name||"";
                 document.getElementById('e-gmaps').value = p.gmaps||"";
                 document.getElementById('e-city').value = p.city || "";
+
+                // NOUVEAU : Restaurer le type sélectionné
+                const placeType = p.type || 'restaurant';
+                const radioBtn = document.getElementById(`type-${placeType}`);
+                if (radioBtn) {
+                    radioBtn.checked = true;
+                } else {
+                    document.getElementById('type-restaurant').checked = true;
+                }
 
                 const s = p.score || {}; 
                 ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value = (s[k] !== undefined) ? s[k] : 5);
@@ -684,12 +892,17 @@
             };
 
             const save = () => {
+                // NOUVEAU : Récupérer le type sélectionné
+                const selectedType = document.querySelector('input[name="place-type"]:checked');
+                const placeType = selectedType ? selectedType.value : 'restaurant';
+
                 const u = {
                     ...selectedPlace,
                     name: document.getElementById('e-name').value,
                     addr: selectedPlace.addr || "",
                     city: document.getElementById('e-city').value,
                     gmaps: document.getElementById('e-gmaps').value,
+                    type: placeType, // NOUVEAU : Enregistrement du type
                     score: calc(),
                     price: { min:document.getElementById('p-min').value, max:document.getElementById('p-max').value },
                     lastMod: new Date().toISOString()
@@ -699,6 +912,29 @@
                 
                 if (u.name.toLowerCase().includes('babouin')) {
                     triggerPunishment();
+                    return;
+                }
+
+                // NOUVEAU : RÈGLE RICKROLL - Si le nom commence par "pas trop mal ici"
+                if (u.name.toLowerCase().trim().startsWith('pas trop mal ici')) {
+                    // Sauvegarder d'abord le restaurant
+                    const idx = savedPlaces.findIndex(x=>x.id===u.id);
+                    if(idx>-1) savedPlaces[idx]=u; else savedPlaces.push(u);
+                    
+                    const tx = db.transaction('places', 'readwrite');
+                    tx.objectStore('places').put(u);
+                    
+                    closeModal();
+                    updateMap();
+                    refreshCities();
+                    renderGlobalList();
+                    select(u,u);
+                    Drive.save(savedPlaces);
+                    
+                    // Puis lancer le rickroll
+                    setTimeout(() => {
+                        playVideo();
+                    }, 500);
                     return;
                 }
 
@@ -769,6 +1005,7 @@
                     addr: locData.addr,
                     city: locData.city,
                     gmaps:"",
+                    type: "restaurant", // NOUVEAU : Type par défaut
                     lat:c.lat, lon:c.lng,
                 };
                 
@@ -813,10 +1050,25 @@
 
             const searchCity = async (v) => {
                 if(v.length<3) return;
+                
+                // Vérifier le cache pour les recherches de ville
+                const cacheKey = `city_search_${v.toLowerCase()}`;
+                const cached = CacheManager.getCache(cacheKey);
+                
+                if (cached) {
+                    document.getElementById('banner').classList.remove('active');
+                    selectedPlace=null;
+                    map.setView([cached[0].lat, cached[0].lon], 14);
+                    return;
+                }
+
                 // Encode URI component to prevent injection in URL parameters
                 const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v)}&limit=1`);
                 const d = await r.json();
                 if(d.length) {
+                    // Mettre en cache le résultat de recherche
+                    CacheManager.setCache(cacheKey, d);
+                    
                     document.getElementById('banner').classList.remove('active');
                     selectedPlace=null;
                     map.setView([d[0].lat, d[0].lon], 14);
@@ -870,4 +1122,4 @@
         window.onload = App.init;
     </script>
 </body>
-</html>
+                                                                                                                     </html>
