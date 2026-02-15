@@ -300,7 +300,7 @@
                             <label for="type-bar">🍺 Bar</label>
                         </div>
                         <div class="type-option">
-                            <input type="radio" name="place-type" id="type-fastfood" value="fast-food">
+                            <input type="radio" name="place-type" id="type-fastfood" value="fastfood">
                             <label for="type-fastfood">🍔 Fast-food</label>
                         </div>
                         <div class="type-option">
@@ -570,21 +570,55 @@
             let isCreating=false, sortMode='score';
             let currentFilter = "";
            
-            const IMAGES = [
-                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
-                "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
-                "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
-                "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
-                "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
-            ];
+            const IMAGES = {
+                restaurant: [
+                    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80",
+                    "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
+                    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
+                    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
+                    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
+                ],
+                bar: [
+                    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
+                    "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=100&q=80",
+                    "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=100&q=80",
+                    "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=100&q=80",
+                    "https://images.unsplash.com/photo-1536935338788-846bb9981813?w=100&q=80"
+                ],
+                fastfood: [
+                    "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=100&q=80",
+                    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100&q=80",
+                    "https://images.unsplash.com/photo-1550547660-d9450f859349?w=100&q=80",
+                    "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=100&q=80",
+                    "https://images.unsplash.com/photo-1513185158878-8d8c2a2a3da3?w=100&q=80"
+                ],
+                boulangerie: [
+                    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&q=80",
+                    "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=100&q=80",
+                    "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=100&q=80",
+                    "https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=100&q=80",
+                    "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=100&q=80"
+                ],
+                pizzeria: [
+                    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=100&q=80",
+                    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&q=80",
+                    "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=100&q=80",
+                    "https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?w=100&q=80",
+                    "https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?w=100&q=80"
+                ]
+            };
            
-            const getImage = (id) => {
+            const getImage = (place) => {
+                const type = place.type || 'restaurant';
+                const id = place.id;
+                
                 // Vérifier le cache d'image
-                const cacheKey = `img_${id}`;
+                const cacheKey = `img_${id}_${type}`;
                 const cached = CacheManager.getCache(cacheKey);
                 if (cached) return cached;
                 
-                const img = IMAGES[id % IMAGES.length];
+                const images = IMAGES[type] || IMAGES.restaurant;
+                const img = images[id % images.length];
                 CacheManager.setCache(cacheKey, img, CacheManager.IMAGE_CACHE_DURATION);
                 return img;
             };
@@ -807,7 +841,7 @@
 
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
-                    <img src="${getImage(p.id)}">
+                    <img src="${getImage(p)}">
                     <div>
                         <div class="card-title">${safeName}</div>
                         <div class="card-addr">${safeCity}</div>
@@ -826,7 +860,7 @@
                 // SECURITY: innerText handles escaping automatically
                 document.getElementById('ban-title').innerText = p.name;
                 document.getElementById('ban-sub').innerText = (p.city||"") + " " + (p.addr||"");
-                document.getElementById('ban-img').src = getImage(p.id);
+                document.getElementById('ban-img').src = getImage(p);
                 document.getElementById('banner').classList.add('active');
                
                 const btnMap = document.getElementById('btn-gmaps-link');
@@ -1135,4 +1169,4 @@
         window.onload = App.init;
     </script>
 </body>
-        </html>
+                                                                      </html>
