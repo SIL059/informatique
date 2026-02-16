@@ -16,6 +16,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 
     <!-- GOOGLE AUTH -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
@@ -323,6 +325,33 @@
         .pin-saved.mk-8-5 { animation: wave-8-5 1.9s infinite ease-in-out; z-index: 9997 !important; }
         .pin-saved.mk-8 { animation: wave-8 1.7s infinite ease-in-out; z-index: 9996 !important; }
 
+        /* STYLES PERSONNALISÉS POUR LES CLUSTERS */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: rgba(225, 29, 72, 0.6);
+        }
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+            width: 50px;
+            height: 50px;
+            margin-left: 5px;
+            margin-top: 5px;
+            text-align: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #be123c);
+            color: white;
+            font-weight: 900;
+            font-size: 18px;
+            line-height: 50px;
+            box-shadow: 0 10px 30px rgba(225, 29, 72, 0.5);
+            border: 4px solid white;
+        }
+        .marker-cluster {
+            animation: cluster-pulse 2s infinite ease-in-out;
+        }
+        @keyframes cluster-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
         /* NOUVEAU : TYPE DE RESTAURANT AVEC CASES ARRONDIES */
         .type-selector { margin-bottom: 20px; }
         .type-selector-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; display: block; }
@@ -540,6 +569,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
         // --- CACHE MANAGER ---
         const CacheManager = (() => {
@@ -751,6 +781,7 @@
         // --- APP LOGIC ---
         const App = (() => {
             let map, db, markers=[], savedPlaces=[], selectedPlace=null;
+            let markerClusterGroup; // Pour le clustering
             let isCreating=false, sortMode='score';
             let currentFilter = "";
            
@@ -1000,10 +1031,25 @@
                         });
                     }
                 });
+                
+                // NOUVEAU : Initialiser le groupe de clusters
+                markerClusterGroup = L.markerClusterGroup({
+                    maxClusterRadius: 80,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    zoomToBoundsOnClick: true,
+                    disableClusteringAtZoom: 15
+                });
+                map.addLayer(markerClusterGroup);
             };
 
             const updateMap = () => {
-                markers.forEach(m=>map.removeLayer(m.marker)); markers=[];
+                // Nettoyer les anciens marqueurs
+                markers.forEach(m=>map.removeLayer(m.marker)); 
+                markers=[];
+                if (markerClusterGroup) {
+                    markerClusterGroup.clearLayers();
+                }
                
                 const sbCityVal = document.getElementById('sb-city-filter').value;
 
@@ -1040,8 +1086,10 @@
                     
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
                    
-                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
+                    // NOUVEAU : Ajouter au cluster group au lieu de directement à la map
+                    const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000});
                     m.on('click', ()=>flyToPlace(p.id));
+                    markerClusterGroup.addLayer(m);
                     markers.push({marker:m});
                 });
             };
@@ -1458,4 +1506,4 @@
         window.onload = App.init;
     </script>
 </body>
-                    </html>
+                                                               </html>
