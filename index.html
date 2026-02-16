@@ -1,4 +1,4 @@
-h<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -15,6 +15,7 @@ h<!DOCTYPE html>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <!-- GOOGLE AUTH -->
     <script async defer src="https://accounts.google.com/gsi/client"></script>
@@ -191,11 +192,10 @@ h<!DOCTYPE html>
         .nav-item.active { color: var(--primary); }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; pointer-events: none; z-index: 10000; transition: 0.3s; }
         .toast.visible { opacity: 1; top: 40px; }
-
     </style>
 </head>
 <body>
-    
+
     <!-- VIEW 1: MAP -->
     <div class="app-view active" id="view-map">
         <div class="sidebar">
@@ -347,7 +347,7 @@ h<!DOCTYPE html>
         <div class="nav-item active" id="nav-map" onclick="App.switchTab('map')"><i class="fa-solid fa-map"></i><span>Carte</span></div>
         <div class="nav-item" id="nav-list" onclick="App.switchTab('list')"><i class="fa-solid fa-book-open"></i><span>Carnet</span></div>
     </div>
-    
+
     <div class="toast" id="toast">Msg</div>
    
     <!-- HIDDEN VIDEO -->
@@ -576,8 +576,7 @@ h<!DOCTYPE html>
                     "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
                     "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
                     "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
-                    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80",
-                    "https://medias.pourlascience.fr/api/v1/images/view/5a82af238fe56f7c2546e257/wide_1300/image.jpg"
+                    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
                 ],
                 bar: [
                     "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
@@ -829,7 +828,7 @@ h<!DOCTYPE html>
                 const s = p.score?.total;
                 let bd = (s===undefined)?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                 let pod = '';
-                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇🦧</div>';
+                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
                 if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
                 if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
                
@@ -934,7 +933,7 @@ h<!DOCTYPE html>
                 h.className='sheet-hero';
                 if(tot>=8){ h.classList.add('hero-gold'); e.innerText=tot>=9?'👑':'🤩'; }
                 else if(tot>=5){ h.classList.add('hero-good'); e.innerText='😋'; }
-                else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='🍌'; } // '😐'
+                else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='😐'; }
                 else { h.classList.add('hero-bad'); e.innerText='🤢'; }
                 return {taste:t, qp:q, vibe:v, total:tot};
             };
@@ -958,10 +957,10 @@ h<!DOCTYPE html>
 
                 // --- SYSTEME PUNITIF & SECURITY ---
                 
-                 // if (u.name.toLowerCase().includes('babouin')) {
-                 //   triggerPunishment();
-                 //   return;
-                 // }
+                if (u.name.toLowerCase().includes('babouin')) {
+                    triggerPunishment();
+                    return;
+                }
 
                 // NOUVEAU : RÈGLE RICKROLL - Si le nom commence par "pas trop mal ici"
                 if (u.name.toLowerCase().trim().startsWith('pas trop mal ici')) {
@@ -1170,4 +1169,4 @@ h<!DOCTYPE html>
         window.onload = App.init;
     </script>
 </body>
-                                                                      </html>
+</html>
