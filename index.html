@@ -577,7 +577,8 @@
                     "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=100&q=80",
                     "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=100&q=80",
                     "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
-                    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80"
+                    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=100&q=80",
+                    "https://medias.pourlascience.fr/api/v1/images/view/5a82af238fe56f7c2546e257/wide_1300/image.jpg"
                 ],
                 bar: [
                     "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&q=80",
@@ -829,7 +830,7 @@
                 const s = p.score?.total;
                 let bd = (s===undefined)?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                 let pod = '';
-                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
+                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇🦧</div>';
                 if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
                 if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
                
@@ -934,7 +935,7 @@
                 h.className='sheet-hero';
                 if(tot>=8){ h.classList.add('hero-gold'); e.innerText=tot>=9?'👑':'🤩'; }
                 else if(tot>=5){ h.classList.add('hero-good'); e.innerText='😋'; }
-                else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='😐'; }
+                else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='🍌'; } // '😐'
                 else { h.classList.add('hero-bad'); e.innerText='🤢'; }
                 return {taste:t, qp:q, vibe:v, total:tot};
             };
