@@ -167,28 +167,85 @@
         #secret-btn { position: absolute; width: 30px; height: 30px; opacity: 0; cursor: pointer; border: none; background: transparent; }
 
         /* NOUVELLES COULEURS DE NOTES PLUS GRANULAIRES */
-        .mk-perfect { background: #a855f7; }
-        .mk-excellent { background: #fbbf24; }
-        .mk-verygood { background: #22c55e; }
-        .mk-good { background: #10b981; }
-        .mk-decent { background: #06b6d4; }
-        .mk-average { background: #f97316; }
+        .mk-10 { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+        .mk-9-5 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+        .mk-9 { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .mk-8-5 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .mk-8 { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .mk-7-5 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .mk-7 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .mk-6-5 { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
+        .mk-5 { background: linear-gradient(135deg, #78350f, #92400e); }
         
-        .bd-perfect { border-left-color: #a855f7; background: #faf5ff; }
-        .bd-excellent { border-left-color: #fbbf24; background: #fffbeb; }
-        .bd-verygood { border-left-color: #22c55e; background: #f0fdf4; }
-        .bd-good { border-left-color: #10b981; }
-        .bd-decent { border-left-color: #06b6d4; }
-        .bd-average { border-left-color: #f97316; }
+        .bd-10 { border-left-color: #a855f7; background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
+        .bd-9-5 { border-left-color: #fbbf24; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+        .bd-9 { border-left-color: #fb923c; background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+        .bd-8-5 { border-left-color: #ef4444; background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+        .bd-8 { border-left-color: #22c55e; background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+        .bd-7-5 { border-left-color: #06b6d4; background: linear-gradient(135deg, #ecfeff, #cffafe); }
+        .bd-7 { border-left-color: #3b82f6; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+        .bd-6-5 { border-left-color: #1e40af; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+        .bd-5 { border-left-color: #78350f; background: linear-gradient(135deg, #fef3c7, #fde68a); }
 
-        /* ANIMATIONS DYNAMIQUES POUR LA CARTE */
-        @keyframes perfect-glow { 0%, 100% { box-shadow: 0 0 20px #a855f7, 0 0 40px #a855f7; } 50% { box-shadow: 0 0 30px #a855f7, 0 0 60px #a855f7; } }
-        @keyframes gold-shine { 0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.5); } 50% { transform: scale(1.05) rotate(5deg); box-shadow: 0 15px 40px rgba(251, 191, 36, 0.7); } }
-        @keyframes green-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3); } 50% { transform: scale(1.03); box-shadow: 0 15px 40px rgba(34, 197, 94, 0.5); } }
+        /* ANIMATIONS DYNAMIQUES SPECTACULAIRES POUR LA CARTE */
+        @keyframes perfect-10 { 
+            0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 30px #a855f7, 0 0 60px #a855f7, 0 0 90px #a855f7; filter: hue-rotate(0deg); } 
+            25% { transform: scale(1.15) rotate(-5deg); box-shadow: 0 0 40px #a855f7, 0 0 80px #a855f7, 0 0 120px #a855f7; } 
+            50% { transform: scale(1.2) rotate(5deg); box-shadow: 0 0 50px #7c3aed, 0 0 100px #7c3aed, 0 0 150px #7c3aed; filter: hue-rotate(20deg); } 
+            75% { transform: scale(1.15) rotate(-5deg); box-shadow: 0 0 40px #a855f7, 0 0 80px #a855f7, 0 0 120px #a855f7; } 
+            100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 30px #a855f7, 0 0 60px #a855f7, 0 0 90px #a855f7; filter: hue-rotate(0deg); } 
+        }
         
-        .pin-saved.mk-perfect { animation: perfect-glow 2s infinite; z-index: 10000 !important; }
-        .pin-saved.mk-excellent { animation: gold-shine 3s infinite; z-index: 9999 !important; }
-        .pin-saved.mk-verygood { animation: green-pulse 2.5s infinite; }
+        @keyframes gold-9-5 { 
+            0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 25px #fbbf24, 0 0 50px #f59e0b; } 
+            20% { transform: scale(1.1) rotate(10deg); box-shadow: 0 0 35px #fbbf24, 0 0 70px #f59e0b, 0 0 100px #fbbf24; } 
+            40% { transform: scale(1.2) rotate(-10deg); box-shadow: 0 0 45px #fbbf24, 0 0 90px #f59e0b, 0 0 130px #fbbf24; } 
+            60% { transform: scale(1.15) rotate(10deg); box-shadow: 0 0 35px #fbbf24, 0 0 70px #f59e0b, 0 0 100px #fbbf24; } 
+            80% { transform: scale(1.1) rotate(-5deg); box-shadow: 0 0 30px #fbbf24, 0 0 60px #f59e0b; } 
+            100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 25px #fbbf24, 0 0 50px #f59e0b; } 
+        }
+        
+        @keyframes orange-9 { 
+            0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 20px #fb923c, 0 0 40px #f97316, 0 5px 30px rgba(251, 146, 60, 0.5); } 
+            25% { transform: scale(1.12) rotate(8deg); box-shadow: 0 0 30px #fb923c, 0 0 60px #f97316, 0 10px 50px rgba(251, 146, 60, 0.7); } 
+            50% { transform: scale(1.18) rotate(-8deg); box-shadow: 0 0 40px #fb923c, 0 0 80px #f97316, 0 15px 60px rgba(251, 146, 60, 0.8); } 
+            75% { transform: scale(1.12) rotate(8deg); box-shadow: 0 0 30px #fb923c, 0 0 60px #f97316, 0 10px 50px rgba(251, 146, 60, 0.7); } 
+        }
+        
+        @keyframes red-8-5 { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px #ef4444, 0 0 30px #dc2626; filter: brightness(1); } 
+            50% { transform: scale(1.15); box-shadow: 0 0 35px #ef4444, 0 0 70px #dc2626, 0 0 100px #ef4444; filter: brightness(1.3); } 
+        }
+        
+        @keyframes green-8 { 
+            0%, 100% { transform: scale(1) translateY(0px); box-shadow: 0 0 20px #22c55e, 0 5px 30px rgba(34, 197, 94, 0.4); } 
+            33% { transform: scale(1.1) translateY(-5px); box-shadow: 0 0 30px #22c55e, 0 10px 50px rgba(34, 197, 94, 0.6); } 
+            66% { transform: scale(1.05) translateY(3px); box-shadow: 0 0 25px #22c55e, 0 7px 40px rgba(34, 197, 94, 0.5); } 
+        }
+        
+        @keyframes cyan-7-5 { 
+            0%, 100% { transform: rotate(0deg) scale(1); box-shadow: 0 0 15px #06b6d4, 0 5px 25px rgba(6, 182, 212, 0.3); } 
+            50% { transform: rotate(360deg) scale(1.12); box-shadow: 0 0 30px #06b6d4, 0 10px 50px rgba(6, 182, 212, 0.6); } 
+        }
+        
+        @keyframes blue-7 { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 12px #3b82f6, 0 3px 20px rgba(59, 130, 246, 0.3); filter: saturate(1); } 
+            50% { transform: scale(1.08); box-shadow: 0 0 25px #3b82f6, 0 8px 40px rgba(59, 130, 246, 0.5); filter: saturate(1.5); } 
+        }
+        
+        @keyframes darkblue-6-5 { 
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px #1e40af; } 
+            50% { transform: scale(1.05); box-shadow: 0 0 20px #1e40af, 0 5px 30px rgba(30, 64, 175, 0.4); } 
+        }
+        
+        .pin-saved.mk-10 { animation: perfect-10 2s infinite ease-in-out; z-index: 10000 !important; }
+        .pin-saved.mk-9-5 { animation: gold-9-5 2.5s infinite ease-in-out; z-index: 9999 !important; }
+        .pin-saved.mk-9 { animation: orange-9 2s infinite ease-in-out; z-index: 9998 !important; }
+        .pin-saved.mk-8-5 { animation: red-8-5 1.5s infinite ease-in-out; z-index: 9997 !important; }
+        .pin-saved.mk-8 { animation: green-8 2s infinite ease-in-out; z-index: 9996 !important; }
+        .pin-saved.mk-7-5 { animation: cyan-7-5 3s infinite linear; z-index: 9995 !important; }
+        .pin-saved.mk-7 { animation: blue-7 2s infinite ease-in-out; z-index: 9994 !important; }
+        .pin-saved.mk-6-5 { animation: darkblue-6-5 2s infinite ease-in-out; }
 
         /* NOUVEAU : TYPE DE RESTAURANT AVEC CASES ARRONDIES */
         .type-selector { margin-bottom: 20px; }
@@ -891,16 +948,16 @@
                         cls = 'mk-new';
                         txt = '<i class="fa-solid fa-plus"></i>';
                     } else {
-                        // NOUVEAU : Gradation fine des couleurs
-                        if (s >= 10) cls = 'mk-perfect';
-                        else if (s >= 9.5) cls = 'mk-excellent';
-                        else if (s >= 9) cls = 'mk-verygood';
-                        else if (s >= 8.5) cls = 'mk-good';
-                        else if (s >= 8) cls = 'mk-good';
-                        else if (s >= 7) cls = 'mk-decent';
-                        else if (s >= 5) cls = 'mk-high';
-                        else if (s >= 4) cls = 'mk-med';
-                        else cls = 'mk-low';
+                        // NOUVEAU : Gradation fine des couleurs selon la nouvelle palette
+                        if (s >= 10) cls = 'mk-10';
+                        else if (s >= 9.5) cls = 'mk-9-5';
+                        else if (s >= 9) cls = 'mk-9';
+                        else if (s >= 8.5) cls = 'mk-8-5';
+                        else if (s >= 8) cls = 'mk-8';
+                        else if (s >= 7.5) cls = 'mk-7-5';
+                        else if (s >= 7) cls = 'mk-7';
+                        else if (s >= 5) cls = 'mk-6-5';
+                        else cls = 'mk-5';
                         
                         txt = s;
                     }
@@ -925,17 +982,17 @@
                 const s = p.score?.total;
                 let bd;
                 
-                // NOUVEAU : Gradation fine des couleurs pour les cartes
+                // NOUVEAU : Gradation fine des couleurs pour les cartes selon la nouvelle palette
                 if (s === undefined) bd = 'bd-new';
-                else if (s >= 10) bd = 'bd-perfect';
-                else if (s >= 9.5) bd = 'bd-excellent';
-                else if (s >= 9) bd = 'bd-verygood';
-                else if (s >= 8.5) bd = 'bd-good';
-                else if (s >= 8) bd = 'bd-gold';
-                else if (s >= 7) bd = 'bd-decent';
-                else if (s >= 5) bd = 'bd-high';
-                else if (s >= 4) bd = 'bd-med';
-                else bd = 'bd-low';
+                else if (s >= 10) bd = 'bd-10';
+                else if (s >= 9.5) bd = 'bd-9-5';
+                else if (s >= 9) bd = 'bd-9';
+                else if (s >= 8.5) bd = 'bd-8-5';
+                else if (s >= 8) bd = 'bd-8';
+                else if (s >= 7.5) bd = 'bd-7-5';
+                else if (s >= 7) bd = 'bd-7';
+                else if (s >= 5) bd = 'bd-6-5';
+                else bd = 'bd-5';
                 
                 let pod = '';
                 if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
@@ -953,19 +1010,36 @@
                 // SECURITY: Escape user inputs before inserting into HTML
                 const safeName = escapeHTML(p.name);
                 const safeCity = escapeHTML(p.city || "Ville inconnue");
+                
+                // NOUVEAU : Afficher la note à gauche du nom
+                const scoreDisplay = (s===undefined) 
+                    ? `<span style="font-weight:800; color:#94a3b8; margin-right:8px;">NEW</span>` 
+                    : `<span style="font-weight:900; font-size:18px; color:${getScoreColor(s)}; margin-right:8px;">${s}</span>`;
 
                 return `<div class="place-card ${bd}" onclick="App.flyToPlace(${p.id})">
                     ${pod}
                     <img src="${getImage(p)}">
-                    <div>
-                        <div class="card-title">${safeName}</div>
+                    <div style="flex:1">
+                        <div class="card-title">${scoreDisplay}${safeName}</div>
                         <div class="card-addr">${safeCity}</div>
                         <div class="card-pills">
-                            <span class="score-pill">${scoreText}</span>
+                            ${p.score?.bonus > 0 ? `<span class="score-pill" style="background:#fff7ed; color:#fb923c;">🔥 +${p.score.bonus}</span>` : ''}
                             ${dateStr ? `<span class="date-pill">${dateStr}</span>` : ''}
                         </div>
                     </div>
                 </div>`;
+            };
+            
+            const getScoreColor = (score) => {
+                if (score >= 10) return '#a855f7';
+                if (score >= 9.5) return '#fbbf24';
+                if (score >= 9) return '#fb923c';
+                if (score >= 8.5) return '#ef4444';
+                if (score >= 8) return '#22c55e';
+                if (score >= 7.5) return '#06b6d4';
+                if (score >= 7) return '#3b82f6';
+                if (score >= 5) return '#1e40af';
+                return '#78350f';
             };
 
             const select = (p, saved) => {
@@ -1308,4 +1382,4 @@
         window.onload = App.init;
     </script>
 </body>
-</html>
+                                </html>
