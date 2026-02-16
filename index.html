@@ -74,7 +74,7 @@
         .search-box input { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); }
         .search-box select { border: none; background: transparent; width: 100%; font-weight: 600; color: var(--dark); outline: none; }
 
-        .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; background-color: var(--bg-sidebar) !important; }
+        .sb-list-content { flex: 1; overflow-y: auto; padding: 16px; background-color: var(--bg-sidebar) !important; max-height: calc(100vh - 300px); }
 
         /* CARDS */
         .place-card { background: white; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #94a3b8; position: relative; transition:0.2s; }
@@ -155,6 +155,41 @@
        
         .btn-save { width: 100%; padding: 18px; border-radius: 20px; background: var(--dark); color: white; font-weight: 800; border: none; margin-top: 10px; cursor: pointer; }
 
+        /* NOUVEAU : BONUS FLAMME */
+        .bonus-section { margin-bottom: 20px; background: #fff7ed; padding: 15px; border-radius: 16px; border: 2px solid #fb923c; }
+        .bonus-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .bonus-header .flame { font-size: 24px; }
+        .bonus-input { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .bonus-input input[type="number"] { width: 80px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 700; text-align: center; }
+        .bonus-reason { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: var(--font-body); resize: vertical; min-height: 60px; }
+
+        /* BOUTON SECRET INVISIBLE */
+        #secret-btn { position: absolute; width: 30px; height: 30px; opacity: 0; cursor: pointer; border: none; background: transparent; }
+
+        /* NOUVELLES COULEURS DE NOTES PLUS GRANULAIRES */
+        .mk-perfect { background: #a855f7; }
+        .mk-excellent { background: #fbbf24; }
+        .mk-verygood { background: #22c55e; }
+        .mk-good { background: #10b981; }
+        .mk-decent { background: #06b6d4; }
+        .mk-average { background: #f97316; }
+        
+        .bd-perfect { border-left-color: #a855f7; background: #faf5ff; }
+        .bd-excellent { border-left-color: #fbbf24; background: #fffbeb; }
+        .bd-verygood { border-left-color: #22c55e; background: #f0fdf4; }
+        .bd-good { border-left-color: #10b981; }
+        .bd-decent { border-left-color: #06b6d4; }
+        .bd-average { border-left-color: #f97316; }
+
+        /* ANIMATIONS DYNAMIQUES POUR LA CARTE */
+        @keyframes perfect-glow { 0%, 100% { box-shadow: 0 0 20px #a855f7, 0 0 40px #a855f7; } 50% { box-shadow: 0 0 30px #a855f7, 0 0 60px #a855f7; } }
+        @keyframes gold-shine { 0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.5); } 50% { transform: scale(1.05) rotate(5deg); box-shadow: 0 15px 40px rgba(251, 191, 36, 0.7); } }
+        @keyframes green-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3); } 50% { transform: scale(1.03); box-shadow: 0 15px 40px rgba(34, 197, 94, 0.5); } }
+        
+        .pin-saved.mk-perfect { animation: perfect-glow 2s infinite; z-index: 10000 !important; }
+        .pin-saved.mk-excellent { animation: gold-shine 3s infinite; z-index: 9999 !important; }
+        .pin-saved.mk-verygood { animation: green-pulse 2.5s infinite; }
+
         /* NOUVEAU : TYPE DE RESTAURANT AVEC CASES ARRONDIES */
         .type-selector { margin-bottom: 20px; }
         .type-selector-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; display: block; }
@@ -202,7 +237,10 @@
             <div class="sb-header">
                 <div style="display:flex; justify-content:space-between">
                     <div class="brand"><i id="easter-egg-trigger" class="fa-solid fa-map-location-dot"></i> Guide SIL</div>
-                    <button id="drive-btn" class="needs-auth" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
+                    <div style="position:relative">
+                        <button id="secret-btn" onclick="App.unlockUnlimited()"></button>
+                        <button id="drive-btn" class="needs-auth" onclick="Drive.handleAuth()" style="border:none; background:none; font-size:20px; cursor:pointer"><i class="fa-brands fa-google-drive"></i></button>
+                    </div>
                 </div>
                 <!-- FILTRE NOM -->
                 <div class="search-box">
@@ -327,6 +365,19 @@
                 <div class="slider-group">
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:700"><span>Quantité</span><span id="v-vibe">5</span></div>
                     <input type="range" min="0" max="10" step="0.5" id="r-vibe" oninput="App.calc()">
+                </div>
+
+                <!-- NOUVEAU : BONUS FLAMME -->
+                <div class="bonus-section">
+                    <div class="bonus-header">
+                        <span class="flame">🔥</span>
+                        <span style="font-weight: 800; font-size: 15px;">Bonus supplémentaire</span>
+                    </div>
+                    <div class="bonus-input">
+                        <input type="number" min="0" max="5" step="0.5" id="bonus-value" placeholder="0" oninput="App.calc()">
+                        <span style="font-size: 13px; color: #64748b;">points de bonus</span>
+                    </div>
+                    <textarea class="bonus-reason" id="bonus-reason" placeholder="Pourquoi ce bonus ? (ex: service exceptionnel, cadeau offert, ambiance unique...)"></textarea>
                 </div>
 
                 <div style="display:flex; gap:10px; margin-bottom:20px">
@@ -635,6 +686,10 @@
             };
 
             const checkRateLimit = () => {
+                // Vérifier si le mode illimité est activé
+                const unlimited = localStorage.getItem('sil_unlimited_mode');
+                if (unlimited === 'true') return true;
+                
                 const now = Date.now();
                 const ONE_HOUR = 3600000;
                 let logs = JSON.parse(localStorage.getItem('sil_creation_logs') || "[]");
@@ -644,6 +699,31 @@
                     return false;
                 }
                 return true;
+            };
+
+            // NOUVEAU : Vérifier si un texte contient toutes les lettres d'un mot interdit
+            const containsAllLetters = (text, forbiddenWord) => {
+                const normalizedText = text.toLowerCase().replace(/[^a-z]/g, '');
+                const letters = forbiddenWord.toLowerCase().split('');
+                let tempText = normalizedText;
+                
+                for (let letter of letters) {
+                    const index = tempText.indexOf(letter);
+                    if (index === -1) return false;
+                    tempText = tempText.slice(0, index) + tempText.slice(index + 1);
+                }
+                return true;
+            };
+
+            // NOUVEAU : Compteur de clics pour le bouton secret
+            let secretClicks = 0;
+            const unlockUnlimited = () => {
+                secretClicks++;
+                if (secretClicks >= 5) {
+                    localStorage.setItem('sil_unlimited_mode', 'true');
+                    toast("🔓 Droits illimités accordés");
+                    secretClicks = 0;
+                }
             };
 
             const logCreation = () => {
@@ -805,9 +885,26 @@
 
                 filteredPlaces.forEach(p => {
                     const s = p.score?.total;
-                    let cls = (s===undefined)?'mk-new':(s>=8?'mk-gold':(s>=5?'mk-high':(s>=4?'mk-med':'mk-low')));
-                    let txt = (s===undefined)?'<i class="fa-solid fa-plus"></i>':s;
-                    // Note: Here txt is either a safe number or a static icon HTML. No user input.
+                    let cls, txt;
+                    
+                    if (s === undefined) {
+                        cls = 'mk-new';
+                        txt = '<i class="fa-solid fa-plus"></i>';
+                    } else {
+                        // NOUVEAU : Gradation fine des couleurs
+                        if (s >= 10) cls = 'mk-perfect';
+                        else if (s >= 9.5) cls = 'mk-excellent';
+                        else if (s >= 9) cls = 'mk-verygood';
+                        else if (s >= 8.5) cls = 'mk-good';
+                        else if (s >= 8) cls = 'mk-good';
+                        else if (s >= 7) cls = 'mk-decent';
+                        else if (s >= 5) cls = 'mk-high';
+                        else if (s >= 4) cls = 'mk-med';
+                        else cls = 'mk-low';
+                        
+                        txt = s;
+                    }
+                    
                     let html = `<div class="pin-saved ${cls}">${txt}</div>`;
                    
                     const m = L.marker([p.lat, p.lon], {icon:L.divIcon({className:'custom-pin', html:html, iconSize:[40,40]}), zIndexOffset:5000}).addTo(map);
@@ -826,14 +923,32 @@
 
             const makeCard = (p, podium=0) => {
                 const s = p.score?.total;
-                let bd = (s===undefined)?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
+                let bd;
+                
+                // NOUVEAU : Gradation fine des couleurs pour les cartes
+                if (s === undefined) bd = 'bd-new';
+                else if (s >= 10) bd = 'bd-perfect';
+                else if (s >= 9.5) bd = 'bd-excellent';
+                else if (s >= 9) bd = 'bd-verygood';
+                else if (s >= 8.5) bd = 'bd-good';
+                else if (s >= 8) bd = 'bd-gold';
+                else if (s >= 7) bd = 'bd-decent';
+                else if (s >= 5) bd = 'bd-high';
+                else if (s >= 4) bd = 'bd-med';
+                else bd = 'bd-low';
+                
                 let pod = '';
-                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🦍</div>';
-                if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🐒</div>';
-                if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🦧</div>';
+                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
+                if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
+                if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
                
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
                 let scoreText = (s===undefined)?'Nouveau':s+'/10';
+                
+                // NOUVEAU : Afficher flamme si bonus
+                if (p.score?.bonus > 0) {
+                    scoreText += ` 🔥+${p.score.bonus}`;
+                }
 
                 // SECURITY: Escape user inputs before inserting into HTML
                 const safeName = escapeHTML(p.name);
@@ -909,6 +1024,10 @@
                 const s = p.score || {}; 
                 ['taste','qp','vibe'].forEach(k => document.getElementById('r-'+k).value = (s[k] !== undefined) ? s[k] : 5);
                 
+                // NOUVEAU : Restaurer le bonus
+                document.getElementById('bonus-value').value = s.bonus || 0;
+                document.getElementById('bonus-reason').value = p.bonusReason || "";
+                
                 document.getElementById('p-min').value = p.price?.min||"";
                 document.getElementById('p-max').value = p.price?.max||"";
                
@@ -921,21 +1040,33 @@
                 let t= +document.getElementById('r-taste').value;
                 let q= +document.getElementById('r-qp').value;
                 let v= +document.getElementById('r-vibe').value;
+                let bonus = parseFloat(document.getElementById('bonus-value').value) || 0;
+                
                 document.getElementById('v-taste').innerText=t;
                 document.getElementById('v-qp').innerText=q;
                 document.getElementById('v-vibe').innerText=v;
                
-                let tot = ((t+q+v)/3).toFixed(1);
+                let baseScore = ((t+q+v)/3);
+                let tot = Math.min(10, baseScore + bonus).toFixed(1); // Max 10
+                
                 document.getElementById('count-score').innerText=tot;
                
                 const h = document.getElementById('modal-hero');
                 const e = document.getElementById('hero-emoji');
                 h.className='sheet-hero';
-                if(tot>=8){ h.classList.add('hero-gold'); e.innerText=tot>=9?'🍌':'🤩'; }
-                else if(tot>=5){ h.classList.add('hero-good'); e.innerText='😋'; }
+                
+                // Gradation plus fine des couleurs
+                if(tot >= 10){ h.classList.add('hero-gold'); e.innerText='💎'; }
+                else if(tot>=9.5){ h.classList.add('hero-gold'); e.innerText='👑'; }
+                else if(tot>=9){ h.classList.add('hero-gold'); e.innerText='🤩'; }
+                else if(tot>=8.5){ h.classList.add('hero-gold'); e.innerText='⭐'; }
+                else if(tot>=8){ h.classList.add('hero-good'); e.innerText='😍'; }
+                else if(tot>=7){ h.classList.add('hero-good'); e.innerText='😋'; }
+                else if(tot>=5){ h.classList.add('hero-good'); e.innerText='🙂'; }
                 else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='😐'; }
                 else { h.classList.add('hero-bad'); e.innerText='🤢'; }
-                return {taste:t, qp:q, vibe:v, total:tot};
+                
+                return {taste:t, qp:q, vibe:v, bonus:bonus, total:parseFloat(tot)};
             };
 
             const save = () => {
@@ -949,15 +1080,23 @@
                     addr: selectedPlace.addr || "",
                     city: document.getElementById('e-city').value,
                     gmaps: document.getElementById('e-gmaps').value,
-                    type: placeType, // NOUVEAU : Enregistrement du type
+                    type: placeType,
                     score: calc(),
+                    bonusReason: document.getElementById('bonus-reason').value, // NOUVEAU : Raison du bonus
                     price: { min:document.getElementById('p-min').value, max:document.getElementById('p-max').value },
                     lastMod: new Date().toISOString()
                 };
 
                 // --- SYSTEME PUNITIF & SECURITY ---
                 
-                if (u.name.toLowerCase().includes('babouin')) {
+                // NOUVEAU : Système anti-babouin amélioré
+                if (containsAllLetters(u.name, 'babouin')) {
+                    triggerPunishment();
+                    return;
+                }
+                
+                // NOUVEAU : Système anti-burger king
+                if (containsAllLetters(u.name, 'burgerking')) {
                     triggerPunishment();
                     return;
                 }
@@ -1163,7 +1302,7 @@
             const toast = (m) => { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); };
             const refresh = () => { updateMap(); renderGlobalList(); toast("Sync OK"); };
 
-            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI };
+            return { init, getData, saveAll, refresh, switchTab, startCreation, cancelCreation, confirmCreation, openModal, closeModal, save, remove, calc, renderGlobalList, setSort, flyToPlace, toast, refreshUI, unlockUnlimited };
         })();
 
         window.onload = App.init;
