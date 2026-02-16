@@ -227,30 +227,7 @@ h<!DOCTYPE html>
         <video id="videoPlayer" autoplay muted playsinline loop></video>
     </div>
 
-    <script>
-        const videos = [
-        "https://thumbs.dreamstime.com/videothumb_large18700/187004030.webm",
-        "https://thumbs.dreamstime.com/videothumb_large16039/160397232.webm",
-        "https://thumbs.dreamstime.com/videothumb_large5004/50048963.webm"
-        ];
 
-        let index = 0;
-        const player = document.getElementById("videoPlayer");
-
-        function playVideo() {
-        player.src = videos[index];
-        player.load();
-        player.play();
-        }
-
-        playVideo();
-
-        document.getElementById("closeBtn").addEventListener("click", () => {
-        index = (index + 1) % videos.length; // boucle infinie
-        playVideo();
-        });
-        
-    </script>
     
     <!-- VIEW 1: MAP -->
     <div class="app-view active" id="view-map">
