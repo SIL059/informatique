@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#cbd5e1">
-    <meta http-equiv="refresh" content="0; url=troll.html">
+    <!-- <meta http-equiv="refresh" content="0; url=troll.html"> -->
     <meta name="apple-mobile-web-app-capable" content="yes">
    
     <!-- LOGO (FAVICON) -->
@@ -193,6 +193,17 @@
         .nav-item.active { color: var(--primary); }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; pointer-events: none; z-index: 10000; transition: 0.3s; }
         .toast.visible { opacity: 1; top: 40px; }
+
+        #closeBtn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            z-index: 10000;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -348,7 +359,36 @@
         <div class="nav-item active" id="nav-map" onclick="App.switchTab('map')"><i class="fa-solid fa-map"></i><span>Carte</span></div>
         <div class="nav-item" id="nav-list" onclick="App.switchTab('list')"><i class="fa-solid fa-book-open"></i><span>Carnet</span></div>
     </div>
+    
+    <div id="overlay">
+        <span id="closeBtn">&times;</span>
+        <video id="videoPlayer" autoplay muted playsinline></video>
+    </div>
 
+    <script>
+        const videos = [
+        "https://thumbs.dreamstime.com/videothumb_large18700/187004030.webm",
+        "https://thumbs.dreamstime.com/videothumb_large16039/160397232.webm",
+        "https://thumbs.dreamstime.com/videothumb_large5004/50048963.webm"
+        ];
+
+        let index = 0;
+        const player = document.getElementById("videoPlayer");
+
+        function playVideo() {
+        player.src = videos[index];
+        player.load();
+        player.play();
+        }
+
+        playVideo();
+
+        document.getElementById("closeBtn").addEventListener("click", () => {
+        index = (index + 1) % videos.length; // boucle infinie
+        playVideo();
+        });
+        
+    </script>
     <div class="toast" id="toast">Msg</div>
    
     <!-- HIDDEN VIDEO -->
