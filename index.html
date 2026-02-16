@@ -828,9 +828,9 @@
                 const s = p.score?.total;
                 let bd = (s===undefined)?'bd-new':(s>=8?'bd-gold':(s>=5?'bd-high':(s>=4?'bd-med':'bd-low')));
                 let pod = '';
-                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🥇</div>';
-                if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🥈</div>';
-                if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🥉</div>';
+                if(podium===1) pod='<div class="podium-icon" style="color:#fbbf24">🍌</div>';
+                if(podium===2) pod='<div class="podium-icon" style="color:#94a3b8">🦍</div>';
+                if(podium===3) pod='<div class="podium-icon" style="color:#d97706">🐒</div>';
                
                 let dateStr = p.lastMod ? new Date(p.lastMod).toLocaleDateString() : '';
                 let scoreText = (s===undefined)?'Nouveau':s+'/10';
@@ -931,7 +931,7 @@
                 const h = document.getElementById('modal-hero');
                 const e = document.getElementById('hero-emoji');
                 h.className='sheet-hero';
-                if(tot>=8){ h.classList.add('hero-gold'); e.innerText=tot>=9?'👑':'🤩'; }
+                if(tot>=8){ h.classList.add('hero-gold'); e.innerText=tot>=9?'🦧':'🤩'; }
                 else if(tot>=5){ h.classList.add('hero-good'); e.innerText='😋'; }
                 else if(tot>=4){ h.classList.add('hero-avg'); e.innerText='😐'; }
                 else { h.classList.add('hero-bad'); e.innerText='🤢'; }
