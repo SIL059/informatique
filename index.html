@@ -21,7 +21,6 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <style>
-        
         /* --- VARIABLES --- */
         :root {
             --primary: #E11D48;
@@ -323,7 +322,7 @@
         .pin-saved.mk-9 { animation: wave-9 2.1s infinite ease-in-out; z-index: 9998 !important; }
         .pin-saved.mk-8-5 { animation: wave-8-5 1.9s infinite ease-in-out; z-index: 9997 !important; }
         .pin-saved.mk-8 { animation: wave-8 1.7s infinite ease-in-out; z-index: 9996 !important; }
-        
+
         /* NOUVEAU : TYPE DE RESTAURANT AVEC CASES ARRONDIES */
         .type-selector { margin-bottom: 20px; }
         .type-selector-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; display: block; }
@@ -351,33 +350,6 @@
         }
         .type-option label:active { transform: scale(0.95); }
 
-        #overlay {
-            position: fixed;
-            inset: 0;
-            background: black;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #overlay video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        #closeBtn {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 40px;
-            color: white;
-            cursor: pointer;
-            z-index: 10000;
-            user-select: none;
-        }
-        
         /* VIDEO PUNITION */
         #video-container { position: fixed; inset: 0; background: black; z-index: 20000; display: none; align-items: center; justify-content: center; }
         #video-player { width: 100%; height: 100%; object-fit: contain; }
@@ -426,29 +398,6 @@
        
         <div class="map-wrapper">
             <div id="map"></div>
-            <div id="overlay">
-                <span id="closeBtn">&times;</span>
-                <video id="videoPlayer" autoplay muted playsinline loop></video>
-            </div>
-            <script>
-                const videos = [
-                    "https://thumbs.dreamstime.com/videothumb_large11639/116392139.webm",
-                    "https://thumbs.dreamstime.com/videothumb_large6537/65375660.webm",
-                    "https://thumbs.dreamstime.com/videothumb_large39676/396762762.webm"
-                ];
-                let index = 0;
-                const player = document.getElementById("videoPlayer");
-                function playVideo() {
-                    player.src = videos[index];
-                    player.load();
-                    player.play();
-                }
-                playVideo();
-                document.getElementById("closeBtn").addEventListener("click", () => {
-                index = (index + 1) % videos.length; // boucle infinie
-                playVideo();
-                });
-            </script>
             <div class="map-ui">
                 <div class="fabs pointer-auto" id="main-ctrls">
                     <button class="fab fab-primary" onclick="App.startCreation()"><i class="fa-solid fa-plus"></i></button>
@@ -524,7 +473,7 @@
                         <div class="type-option">
                             <input type="radio" name="place-type" id="type-fastfood" value="fastfood">
                             <label for="type-fastfood">🍔 Fast-food</label>
-                        </div> 
+                        </div>
                         <div class="type-option">
                             <input type="radio" name="place-type" id="type-boulangerie" value="boulangerie">
                             <label for="type-boulangerie">🥖 Boulangerie</label>
@@ -592,7 +541,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        
         // --- CACHE MANAGER ---
         const CacheManager = (() => {
             const CACHE_PREFIX = 'guideSil_';
@@ -1510,4 +1458,4 @@
         window.onload = App.init;
     </script>
 </body>
-                    </html>
+</html>
